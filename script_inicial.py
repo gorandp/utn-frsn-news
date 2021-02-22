@@ -11,8 +11,11 @@ TIMEOUT = 60*3 # seconds = 3 minutes
 
 class NewFeed():
     def get_urls(self):
-        content = requests.get(URL_FEED, timeout=TIMEOUT)
-        parser = bs4.BeautifulSoup(content.text, "lxml")
+        response = requests.get(URL_FEED, timeout=TIMEOUT)
+        parser = bs4.BeautifulSoup(
+            response.content.decode("utf-8", errors="ignore"),
+            "lxml"
+        )
         urls = []
         for new in parser.find_all("a", attrs={"class": "titulohome"}):
             href = new.attrs["href"]
@@ -22,9 +25,12 @@ class NewFeed():
 
 class NewReader():
     def read_new(self, url):
-        content = requests.get(url, timeout=TIMEOUT)
+        response = requests.get(url, timeout=TIMEOUT)
         parse_time = time()
-        parser = bs4.BeautifulSoup(content.text, "lxml")
+        parser = bs4.BeautifulSoup(
+            response.content.decode("utf-8", errors="ignore"),
+            "lxml"
+        )
         title = parser.find("td", attrs={"class": "textotitulo"})
         body = parser.find("table", attrs={"class": "textohome"})
         title = title.text.strip() if title else ""
@@ -36,7 +42,7 @@ class NewReader():
             "url": url,
             "title": title,
             "body": body,
-            "responseElapsedTime": content.elapsed.total_seconds(),
+            "responseElapsedTime": response.elapsed.total_seconds(),
             "parseElapsedTime": time() - parse_time,
         }
         return new
