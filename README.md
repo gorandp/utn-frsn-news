@@ -2,6 +2,14 @@
 
 Buscar las últimas noticias de la UTN FRSN y publicarlas en un canal de Telegram
 
+# MongoDB
+
+Guarda todas las noticias en una coleccion de Mongo.
+
+# Cola de mensajeo
+
+Utiliza un sistema de cola de trabajo para mandar los mensajes con las noticias
+
 # TODO
 
 - Guardar datos en MongoDB
