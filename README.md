@@ -59,3 +59,26 @@ En cuanto a la estructura:
 - Cron y corrida de scripts en Heroku usando un add-on llamado Heroku Scheduler
   - Heroku Scheduler: https://elements.heroku.com/addons/scheduler
   - Blog donde explica cómo usarlo: https://paulkarayan.tumblr.com/post/72895819532/how-to-run-a-daily-script-on-heroku
+
+## Variables de entorno
+
+Es importante destacar que el código fuente no contiene las llaves de acceso a la base de datos ni tampoco a la api de Telegram. Es por ello que se debe configurar mediante variables de entorno.
+
+Dependiendo del entorno, se puede configurar de varias formas. Durante el desarrollo o testeo local de este programa se puede utilizar un archivo `.env` al cual se le pone el siguiente contenido:
+
+```
+TELEGRAM_API_KEY="..."
+DB_CONNECTION_STRING="..."
+LOGGER_LEVEL=INFO
+TIMEOUT=180
+```
+
+Notar que hay 4 variables de entorno.
+
+- `TELEGRAM_API_KEY` llave de acceso al bot de Telegram
+- `DB_CONNECTION_STRING` string que contiene usuario y contraseña, la cual da el acceso completo a la DB
+- `LOGGER_LEVEL` menor nivel de logs a mostrar
+  - En el ejemplo pongo `INFO` pero pueden ser: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` (o `FATAL`)
+- `TIMEOUT` tiempo de espera de la petición de HTTP (luego de esto, se corta la petición y sigue la ejecución del programa, que puede volver a realizar la petición o marcarla como error)
+
+En el caso que el entorno sea Heroku, se setean las mismas variables de entorno en "App > Settings > Config Vars > Reveal Config Vars".
