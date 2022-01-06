@@ -27,9 +27,8 @@ class NewsReader(Base):
         body = parser.find("table", attrs={"class": "textohome"})
         title = title.text.strip() if title else ""
         body = body.text.strip() if body else ""
-        strdate = datetime.now().replace(microsecond=0).isoformat() + "-03:00"
         new = {
-            "insertedDatetime": datetime.fromisoformat(strdate),
+            "insertedDatetime": datetime.utcnow(),
             "url": url,
             "title": title,
             "body": body,
