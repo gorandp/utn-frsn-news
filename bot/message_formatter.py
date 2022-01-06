@@ -1,13 +1,18 @@
+from datetime import timedelta
+
+
 def build_message_header(new_data: dict) -> str:
     out = []
-    out.append(f'<code>{new_data["insertedDatetime"]}</code>')
+    inserted_arg = new_data["insertedDatetime"] - timedelta(hours=3) # UTC-03
+    out.append(f'<code>{inserted_arg}</code>')
     out.append(f'<a href="{new_data["url"]}"><b>{new_data["title"]}</b></a>')
     return "\n".join(out)
 
 
 def build_message(new_data: dict) -> str:
     out = []
-    out.append(f'<code>{new_data["insertedDatetime"]}</code>')
+    inserted_arg = new_data["insertedDatetime"] - timedelta(hours=3) # UTC-03
+    out.append(f'<code>{inserted_arg}</code>')
     out.append(f'<a href="{new_data["url"]}">'
                f'<b>{new_data["title"]}</b></a>'
     )
