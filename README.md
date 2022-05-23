@@ -82,3 +82,4 @@ Notar que hay 4 variables de entorno.
 - `TIMEOUT` tiempo de espera de la petición de HTTP (luego de esto, se corta la petición y sigue la ejecución del programa, que puede volver a realizar la petición o marcarla como error)
 
 En el caso que el entorno sea Heroku, se setean las mismas variables de entorno en "App > Settings > Config Vars > Reveal Config Vars".
+
