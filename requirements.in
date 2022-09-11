@@ -1,0 +1,9 @@
+requests
+beautifulsoup4
+lxml
+dnspython
+pymongo
+python-dotenv
+
+# generate requirements
+pip-tools
