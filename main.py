@@ -4,8 +4,10 @@ dotenv.load_dotenv()
 from bot.scraper import Scraper
 from bot.messager import Messager
 
-# GCP tutorial followed
-# https://cloud.google.com/blog/products/application-development/how-to-schedule-a-recurring-python-script-on-gcp
+# Enforced main.py by GCP
+# and also data/context variables passed to "entry points"
+# (the 2 functions you see)
+# https://stackoverflow.com/questions/58452034/main-takes-0-positional-arguments-but-2-were-given
 
 def main_scraper(data, context):
     """Triggered from a message on a Cloud Pub/Sub topic.

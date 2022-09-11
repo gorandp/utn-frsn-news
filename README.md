@@ -87,7 +87,7 @@ Para el deploy en GCP, se hace uso de un archivo YAML. Básicamente consiste en 
 
 ## Google Cloud Platform
 
-A fines de acortar este README, no se explica cómo crearse una cuenta en GCP, ni como instalar Google Cloud CLI, ni tampoco se profundiza mucho en los servicios utilizados de GCP. Al final de esta sección dejo a disposición unos links con info útil con el fin de esclarecer estos temas.
+A fines de acortar este README, no se explica cómo crearse una cuenta en GCP, cómo instalar Google Cloud CLI, ni tampoco se profundiza mucho en los servicios utilizados de GCP. Al final de esta sección hay a disposición unos links con info útil sobre estos temas.
 
 El esquema de cómo funciona la infra es el siguiente:
 - 2 temas Pub/Sub. Uno para el scraper y otro para el messenger
@@ -99,6 +99,11 @@ El deploy de las functions y la creación de los scheduled jobs se hace desde la
 ### Deploy functions
 
 ```bash
+# Template
+gcloud functions deploy [FUNCTION_NAME] --entry-point main --runtime python37 --trigger-resource [TOPIC_NAME] --trigger-event google.pubsub.topic.publish --timeout 540s
+```
+
+```bash
 # Scraper
 gcloud functions deploy scraper_func --entry-point main_scraper --runtime python37 --trigger-resource scraper-pubsub-topic --trigger-event google.pubsub.topic.publish --timeout 540s --env-vars-file .env.yaml
 # Messenger
@@ -106,6 +111,11 @@ gcloud functions deploy messenger_func --entry-point main_messenger --runtime py
 ```
 
 ### Schedule jobs
+
+```bash
+# Template
+# gcloud scheduler jobs create pubsub [JOB_NAME] --schedule [SCHEDULE] --topic [TOPIC_NAME] --message-body [MESSAGE_BODY]
+```
 
 ```bash
 # Scraper
