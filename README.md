@@ -56,9 +56,11 @@ En cuanto a la estructura:
 
 - Base de datos: MongoDB
   - Host: https://www.mongodb.com/
-- Cron y corrida de scripts en Heroku usando un add-on llamado Heroku Scheduler
-  - Heroku Scheduler: https://elements.heroku.com/addons/scheduler
-  - Blog donde explica cómo usarlo: https://paulkarayan.tumblr.com/post/72895819532/how-to-run-a-daily-script-on-heroku
+- Hosting: Google Cloud Platform (GCP)
+  - Servicios usados: Cloud Functions, Cloud Scheduler, Cloud Build, Pub/Sub
+  - Quota gratuita: https://cloud.google.com/free/docs/free-cloud-features?hl=es#free-tier-usage-limits
+
+Anteriormente esta aplicación se hosteaba en Heroku pero a partir del 28/11/2022 sus planes gratuitos serán removidos (https://help.heroku.com/RSBRUH58/removal-of-heroku-free-product-plans-faq).
 
 ## Variables de entorno
 
@@ -81,5 +83,40 @@ Notar que hay 4 variables de entorno.
   - En el ejemplo pongo `INFO` pero pueden ser: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` (o `FATAL`)
 - `TIMEOUT` tiempo de espera de la petición de HTTP (luego de esto, se corta la petición y sigue la ejecución del programa, que puede volver a realizar la petición o marcarla como error)
 
-En el caso que el entorno sea Heroku, se setean las mismas variables de entorno en "App > Settings > Config Vars > Reveal Config Vars".
+Para el deploy en GCP, se hace uso de un archivo YAML. Básicamente consiste en copiar el archivo `.env` con el nombre `.env.yaml` y luego cambiar los signos `=` por `: ` (notar el espacio luego del ":"). Por último se le pone comillas al valor de TIMEOUT, es decir que quedaría así `TIMEOUT: "180"`.
 
+## Google Cloud Platform
+
+A fines de acortar este README, no se explica cómo crearse una cuenta en GCP, ni como instalar Google Cloud CLI, ni tampoco se profundiza mucho en los servicios utilizados de GCP. Al final de esta sección dejo a disposición unos links con info útil con el fin de esclarecer estos temas.
+
+El esquema de cómo funciona la infra es el siguiente:
+- 2 temas Pub/Sub. Uno para el scraper y otro para el messenger
+- 2 functions que se subscriben al tema correspondiente Pub/Sub
+- 2 scheduled jobs que publican un mensaje en el tema Pub/Sub cada 1 hora para activar la function deseada
+
+El deploy de las functions y la creación de los scheduled jobs se hace desde la CLI de gcloud.
+
+### Deploy functions
+
+```bash
+# Scraper
+gcloud functions deploy scraper_func --entry-point main_scraper --runtime python37 --trigger-resource scraper-pubsub-topic --trigger-event google.pubsub.topic.publish --timeout 540s --env-vars-file .env.yaml
+# Messenger
+gcloud functions deploy messenger_func --entry-point main_messenger --runtime python37 --trigger-resource messenger-pubsub-topic --trigger-event google.pubsub.topic.publish --timeout 540s --env-vars-file .env.yaml
+```
+
+### Schedule jobs
+
+```bash
+# Scraper
+gcloud scheduler jobs create pubsub scraper_job --schedule "30 * * * *" --topic scraper-pubsub-topic --message-body "Scraper job once per hour at minute 30."
+# Messenger
+gcloud scheduler jobs create pubsub messenger_job --schedule "40 * * * *" --topic messenger-pubsub-topic --message-body "Messenger job once per hour at minute 40."
+```
+
+### Referencias externas útiles
+
+- GCP: https://cloud.google.com/
+- Instalar Google Cloud CLI: https://cloud.google.com/sdk/docs/install-sdk
+- Schedule a recurring python script: https://cloud.google.com/blog/products/application-development/how-to-schedule-a-recurring-python-script-on-gcp
+- El uso de un archivo externo para las variables de entorno: https://cloud.google.com/functions/docs/configuring/env-var
