@@ -20,3 +20,4 @@ node_modules
 __pycache__/
 venv/
 requirements.in
+deploy.sh
