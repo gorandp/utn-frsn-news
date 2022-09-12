@@ -121,7 +121,7 @@ gcloud functions deploy messenger_func --entry-point main_messenger --runtime py
 # Scraper
 gcloud scheduler jobs create pubsub scraper_job --schedule "30 * * * *" --topic scraper-pubsub-topic --message-body "Scraper job once per hour at minute 30."
 # Messenger
-gcloud scheduler jobs create pubsub messenger_job --schedule "40 * * * *" --topic messenger-pubsub-topic --message-body "Messenger job once per hour at minute 40."
+gcloud scheduler jobs create pubsub messenger_job --schedule "55 * * * *" --topic messenger-pubsub-topic --message-body "Messenger job once per hour at minute 55."
 ```
 
 ### Referencias externas útiles
