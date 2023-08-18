@@ -9,12 +9,18 @@ from .telegram import Telegram
 
 SLEEP_TIME = 12*60*60 # 12 hours
 
-regex_url = re.compile(r"https://www.frsn.utn.edu.ar/frsn/selec_seccion.asp\?"
-                       r"IDSeccion=(\d+)&IDSub=(\d+)&ContentID=(\d+)")
-
+old_site_regex_url = re.compile(
+    r"https://wwwsi.frsn.utn.edu.ar/frsn/selec_seccion.asp\?"
+    r"IDSeccion=(\d+)&IDSub=(\d+)&ContentID=(\d+)")
+wordpress_regex_url = re.compile(
+    r"https://www.frsn.utn.edu.ar/\?p=(\d+)"
+)
 
 def gen_id_from_url(url: str):
-    m = regex_url.match(url)
+    m = wordpress_regex_url.match(url)
+    if m:
+        return f"wordpress2023-{m.group(1)}"
+    m = old_site_regex_url.match(url)
     if m:
         return f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
     raise ValueError("Match error")

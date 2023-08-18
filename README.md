@@ -60,7 +60,7 @@ En cuanto a la estructura:
   - Servicios usados: Cloud Functions, Cloud Scheduler, Cloud Build, Pub/Sub
   - Quota gratuita: https://cloud.google.com/free/docs/free-cloud-features?hl=es#free-tier-usage-limits
 
-Anteriormente esta aplicación se hosteaba en Heroku pero a partir del 28/11/2022 sus planes gratuitos serán removidos (https://help.heroku.com/RSBRUH58/removal-of-heroku-free-product-plans-faq).
+Anteriormente esta aplicación se hosteaba en Heroku pero a partir del 28/11/2022 sus planes gratuitos fueron removidos (https://help.heroku.com/RSBRUH58/removal-of-heroku-free-product-plans-faq).
 
 ## Variables de entorno
 
@@ -100,14 +100,14 @@ El deploy de las functions y la creación de los scheduled jobs se hace desde la
 
 ```bash
 # Template
-gcloud functions deploy [FUNCTION_NAME] --entry-point main --runtime python37 --trigger-resource [TOPIC_NAME] --trigger-event google.pubsub.topic.publish --timeout 540s
+gcloud functions deploy [FUNCTION_NAME] --entry-point main --runtime python311 --trigger-resource [TOPIC_NAME] --trigger-event google.pubsub.topic.publish --timeout 540s
 ```
 
 ```bash
 # Scraper
-gcloud functions deploy scraper_func --entry-point main_scraper --runtime python37 --trigger-resource scraper-pubsub-topic --trigger-event google.pubsub.topic.publish --timeout 540s --env-vars-file .env.yaml
+gcloud functions deploy scraper_func --entry-point main_scraper --runtime python311 --trigger-resource scraper-pubsub-topic --trigger-event google.pubsub.topic.publish --timeout 540s --env-vars-file .env.yaml
 # Messenger
-gcloud functions deploy messenger_func --entry-point main_messenger --runtime python37 --trigger-resource messenger-pubsub-topic --trigger-event google.pubsub.topic.publish --timeout 540s --env-vars-file .env.yaml
+gcloud functions deploy messenger_func --entry-point main_messenger --runtime python311 --trigger-resource messenger-pubsub-topic --trigger-event google.pubsub.topic.publish --timeout 540s --env-vars-file .env.yaml
 ```
 
 ### Schedule jobs

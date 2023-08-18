@@ -1,21 +1,27 @@
 from datetime import timedelta
 
 
+def get_date_msg(new_data: dict) -> str:
+    date = new_data.get("publishedDatetime", new_data["insertedDatetime"])
+    date -= timedelta(hours=3) # UTC-03
+    date_msg = f'<code>{date.replace(microsecond=0)}</code>'
+    if not new_data.get("publishedDatetime"):
+        date_msg = date_msg.replace('<code>', '<code>(scrap) ', 1)
+    return date_msg
+
+
 def build_message_header(new_data: dict) -> str:
     out = []
-    inserted_arg = new_data["insertedDatetime"] - timedelta(hours=3) # UTC-03
-    out.append(f'<code>{inserted_arg}</code>')
+    out.append(get_date_msg(new_data))
     out.append(f'<a href="{new_data["url"]}"><b>{new_data["title"]}</b></a>')
     return "\n".join(out)
 
 
 def build_message(new_data: dict) -> str:
     out = []
-    inserted_arg = new_data["insertedDatetime"] - timedelta(hours=3) # UTC-03
-    out.append(f'<code>{inserted_arg.replace(microsecond=0)}</code>')
+    out.append(get_date_msg(new_data))
     out.append(f'<a href="{new_data["url"]}">'
-               f'<b>{new_data["title"]}</b></a>'
-    )
+               f'<b>{new_data["title"]}</b></a>')
     out.append('')
     body = new_data["body"]
     if "&" in body:

@@ -5,11 +5,18 @@ import re
 from .mongo import DB
 from .base import Base
 
-regex_url = re.compile(r"https://www.frsn.utn.edu.ar/frsn/selec_seccion.asp\?"
-                       r"IDSeccion=(\d+)&IDSub=(\d+)&ContentID=(\d+)")
+old_site_regex_url = re.compile(
+    r"https://wwwsi.frsn.utn.edu.ar/frsn/selec_seccion.asp\?"
+    r"IDSeccion=(\d+)&IDSub=(\d+)&ContentID=(\d+)")
+wordpress_regex_url = re.compile(
+    r"https://www.frsn.utn.edu.ar/\?p=(\d+)"
+)
 
 def get_order(url: str):
-    m = regex_url.match(url)
+    m = wordpress_regex_url.match(url)
+    if m:
+        return int(m.group(1)), 0, 0
+    m = old_site_regex_url.match(url)
     if m:
         return int(m.group(1)), int(m.group(2)), int(m.group(3))
     raise ValueError("Match error")
@@ -38,7 +45,7 @@ class BotDb(Base):
                 "url": n[0],
                 "urlPhoto": n[1],
                 "idSeccion": get_order(n[0])[0],
-                "idSub": get_order(n[0])[1],
+                "idSub":     get_order(n[0])[1],
                 "contentId": get_order(n[0])[2]
             }
             for n in news_urls
