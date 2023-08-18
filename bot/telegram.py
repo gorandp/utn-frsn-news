@@ -33,7 +33,9 @@ class Telegram(Base):
                 body = {
                     'chat_id': CHAT_ID,
                     'text': _message,
-                    'parse_mode': 'HTML'
+                    'parse_mode': 'HTML',
+                    # NOTE: Useful when sending a lot of messages
+                    # 'disable_notification': True,
                 }
                 response = requests.post(URL_SEND_MESSAGES, json=body)
                 if (
@@ -78,7 +80,9 @@ class Telegram(Base):
                 'chat_id': CHAT_ID,
                 'photo': photo_url,
                 'caption': caption,
-                'parse_mode': 'HTML'
+                'parse_mode': 'HTML',
+                # NOTE: Useful when sending a lot of messages
+                # 'disable_notification': True,
             }
             response = requests.post(URL_SEND_PHOTO, json=body)
             if (

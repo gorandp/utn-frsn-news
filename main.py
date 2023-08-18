@@ -26,3 +26,7 @@ def main_messenger(data, context):
     """
     messager = Messager()
     messager.process_queue()
+
+# if __name__ == "__main__":
+#     main_scraper({}, {})
+#     main_messenger({}, {})
