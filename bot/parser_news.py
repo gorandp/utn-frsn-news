@@ -19,6 +19,33 @@ class NewsReader(Base):
         response = requests.get(url, timeout=TIMEOUT)
         self.logger.debug(f"Parsing: {url}")
         parse_time = time()
+        soup = bs4.BeautifulSoup(
+            response.content.decode("utf-8", errors="ignore"),
+            "lxml"
+        )
+        title = soup.find("h1")
+        body = soup.find("main > article")
+        title = title.text.strip() if title else ""
+        body = body.text.strip() if body else ""
+        new = {
+            "insertedDatetime": datetime.utcnow(),
+            "url": url,
+            "title": title,
+            "body": body,
+            "urlPhoto": url_photo,
+            "responseElapsedTime": response.elapsed.total_seconds(),
+            "parseElapsedTime": time() - parse_time,
+        }
+        if not url_photo:
+            del new['urlPhoto']
+        self.logger.debug(f"Done parse of: {url}")
+        return new
+
+    def read_new_old_site(self, url: str, url_photo: str):
+        self.logger.debug(f"Getting: {url}")
+        response = requests.get(url, timeout=TIMEOUT)
+        self.logger.debug(f"Parsing: {url}")
+        parse_time = time()
         parser = bs4.BeautifulSoup(
             response.content.decode("utf-8", errors="ignore"),
             "lxml"
