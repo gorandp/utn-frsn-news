@@ -4,7 +4,7 @@ from datetime import timedelta
 def build_message_header(new_data: dict) -> str:
     out = []
     inserted_arg = new_data["insertedDatetime"] - timedelta(hours=3) # UTC-03
-    out.append(f'<code>{inserted_arg}</code>')
+    out.append(f'<code>{inserted_arg.replace(microsecond=0)}</code>')
     out.append(f'<a href="{new_data["url"]}"><b>{new_data["title"]}</b></a>')
     return "\n".join(out)
 
