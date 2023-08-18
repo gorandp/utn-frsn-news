@@ -24,10 +24,15 @@ class NewsReader(Base):
             "lxml"
         )
         title = soup.find("h1")
-        body = soup.find("main > article")
+        body = soup.select_one("div.entry-content")
+        entry_date = soup.select_one("time.entry-date")
         title = title.text.strip() if title else ""
-        body = body.text.strip() if body else ""
+        body = body.text.replace("\n", "\n\n").strip() if body else ""
         new = {
+            "publishedDatetime":
+                datetime.fromisoformat(entry_date.attrs['datetime'])
+                if entry_date
+                else None,
             "insertedDatetime": datetime.utcnow(),
             "url": url,
             "title": title,
