@@ -5,8 +5,8 @@ import re
 from .mongo import DB
 from .base import Base
 
-regex_url = re.compile(r"https://www.frsn.utn.edu.ar/frsn/selec_seccion.asp\?"
-                       r"IDSeccion=(\d+)&IDSub=(\d+)&ContentID=(\d+)")
+regex_url = re.compile(r"https://wwwsi.frsn.utn.edu.ar/frsn/selec_seccion.asp"
+                       r"\?IDSeccion=(\d+)&IDSub=(\d+)&ContentID=(\d+)")
 
 def get_order(url: str):
     m = regex_url.match(url)

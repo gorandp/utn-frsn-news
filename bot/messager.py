@@ -9,8 +9,8 @@ from .telegram import Telegram
 
 SLEEP_TIME = 12*60*60 # 12 hours
 
-regex_url = re.compile(r"https://www.frsn.utn.edu.ar/frsn/selec_seccion.asp\?"
-                       r"IDSeccion=(\d+)&IDSub=(\d+)&ContentID=(\d+)")
+regex_url = re.compile(r"https://wwwsi.frsn.utn.edu.ar/frsn/selec_seccion.asp"
+                       r"\?IDSeccion=(\d+)&IDSub=(\d+)&ContentID=(\d+)")
 
 
 def gen_id_from_url(url: str):
