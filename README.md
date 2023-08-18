@@ -60,7 +60,7 @@ En cuanto a la estructura:
   - Servicios usados: Cloud Functions, Cloud Scheduler, Cloud Build, Pub/Sub
   - Quota gratuita: https://cloud.google.com/free/docs/free-cloud-features?hl=es#free-tier-usage-limits
 
-Anteriormente esta aplicación se hosteaba en Heroku pero a partir del 28/11/2022 sus planes gratuitos serán removidos (https://help.heroku.com/RSBRUH58/removal-of-heroku-free-product-plans-faq).
+Anteriormente esta aplicación se hosteaba en Heroku pero a partir del 28/11/2022 sus planes gratuitos fueron removidos (https://help.heroku.com/RSBRUH58/removal-of-heroku-free-product-plans-faq).
 
 ## Variables de entorno
 
