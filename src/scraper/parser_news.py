@@ -4,13 +4,13 @@ import requests
 import bs4
 from datetime import datetime
 
-from .base import Base
+from ..logger import LogWrapper
 
 
-TIMEOUT = int(os.getenv('TIMEOUT'))
+TIMEOUT = int(os.getenv("TIMEOUT") or "60")
 
 
-class NewsReader(Base):
+class NewsReader(LogWrapper):
     def __init__(self):
         super().__init__(__name__)
 
@@ -20,8 +20,7 @@ class NewsReader(Base):
         self.logger.debug(f"Parsing: {url}")
         parse_time = time()
         soup = bs4.BeautifulSoup(
-            response.content.decode("utf-8", errors="ignore"),
-            "lxml"
+            response.content.decode("utf-8", errors="ignore"), "lxml"
         )
         title = soup.find("h1")
         body = soup.select_one("div.entry-content")
@@ -29,10 +28,9 @@ class NewsReader(Base):
         title = title.text.strip() if title else ""
         body = body.text.replace("\n", "\n\n").strip() if body else ""
         new = {
-            "publishedDatetime":
-                datetime.fromisoformat(entry_date.attrs['datetime'])
-                if entry_date
-                else None,
+            "publishedDatetime": datetime.fromisoformat(entry_date.attrs["datetime"])
+            if entry_date
+            else None,
             "insertedDatetime": datetime.utcnow(),
             "url": url,
             "title": title,
@@ -42,7 +40,7 @@ class NewsReader(Base):
             "parseElapsedTime": time() - parse_time,
         }
         if not url_photo:
-            del new['urlPhoto']
+            del new["urlPhoto"]
         self.logger.debug(f"Done parse of: {url}")
         return new
 
@@ -52,8 +50,7 @@ class NewsReader(Base):
         self.logger.debug(f"Parsing: {url}")
         parse_time = time()
         parser = bs4.BeautifulSoup(
-            response.content.decode("utf-8", errors="ignore"),
-            "lxml"
+            response.content.decode("utf-8", errors="ignore"), "lxml"
         )
         title = parser.find("td", attrs={"class": "textotitulo"})
         body = parser.find("table", attrs={"class": "textohome"})
@@ -69,8 +66,8 @@ class NewsReader(Base):
             "parseElapsedTime": time() - parse_time,
         }
         if url_photo:
-            new['urlPhoto'] = url_photo
+            new["urlPhoto"] = url_photo
         else:
-            del new['urlPhoto']
+            del new["urlPhoto"]
         self.logger.debug(f"Done parse of: {url}")
         return new

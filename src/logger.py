@@ -2,15 +2,19 @@ import os
 import logging
 
 
-LOGGER_LEVEL = getattr(logging, os.getenv('LOGGER_LEVEL'))
-LOGGER_FORMAT_STR_HEAD = '%(asctime)s [%(log_name)s][%(levelname)s] %(message)s'
+LOGGER_LEVEL = getattr(
+    logging,
+    os.getenv("LOGGER_LEVEL") or "INFO",
+    logging.INFO,
+)
+LOGGER_FORMAT_STR_HEAD = "%(asctime)s - %(levelname)s - %(log_name)s - %(message)s"
 
 
 def get_logger(log_name: str) -> logging.LoggerAdapter:
     logger = logging.getLogger(name=log_name)
 
     logger_format_str = LOGGER_FORMAT_STR_HEAD
-    extra = {'log_name': log_name}
+    extra = {"log_name": log_name}
     l_format = logging.Formatter(logger_format_str)
 
     if logger.hasHandlers():
@@ -26,3 +30,8 @@ def get_logger(log_name: str) -> logging.LoggerAdapter:
     logger = logging.LoggerAdapter(logger, extra)
 
     return logger
+
+
+class LogWrapper:
+    def __init__(self, name: str):
+        self.logger = get_logger(name)

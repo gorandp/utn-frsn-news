@@ -1,27 +1,27 @@
 import concurrent.futures
 from time import sleep
+from typing import Generator
 
-from .db import BotDb
-from .message_formatter import (build_message_header, build_message)
+from ..logger import LogWrapper
 from .parser_feed import HistoricFeed
 from .parser_news import NewsReader
-from .base import Base
-from .telegram import Telegram
+from ..messenger.telegram import Telegram
 
-HISTORIC_SLEEP_TIME = 12*60*60 # 12 hours
-SCRAPER_SLEEP_TIME = 6*60*60 # 6 hours
+HISTORIC_SLEEP_TIME = 12 * 60 * 60  # 12 hours
+SCRAPER_SLEEP_TIME = 6 * 60 * 60  # 6 hours
 
 BATCH_LENGHT = 10
 
-def batch_sequence(sequence: list) -> list:
+
+def batch_sequence(sequence: list) -> Generator[list, None, None]:
     for i in range(0, len(sequence), BATCH_LENGHT):
-        yield sequence[i:i + BATCH_LENGHT]
+        yield sequence[i : i + BATCH_LENGHT]
 
 
-class Scraper(Base):
+class Scraper(LogWrapper):
     def __init__(self):
         super().__init__(__name__)
-        self.db = BotDb()
+        self.db = BotDb()  # FIXME: replace with D1
         self.feed = HistoricFeed()
         self.news_reader = NewsReader()
 
@@ -29,10 +29,9 @@ class Scraper(Base):
         with concurrent.futures.ThreadPoolExecutor() as executor:
             all_executors = []
             for url_feed in urls_batch:
-                all_executors.append(executor.submit(
-                    self.news_reader.read_new,
-                    *url_feed
-                ))
+                all_executors.append(
+                    executor.submit(self.news_reader.read_new, *url_feed)
+                )
             all_news = []
             for e in all_executors:
                 all_news.append(e.result())
@@ -52,7 +51,7 @@ class Scraper(Base):
             total_batches += 1
 
         for batch_idx, batch in enumerate(batch_sequence(urls)):
-            self.logger.info(f"Processing batch {batch_idx+1}/{total_batches}")
+            self.logger.info(f"Processing batch {batch_idx + 1}/{total_batches}")
             batch = self.db.get_not_existent_urls(batch)
             if not batch:
                 self.logger.info("There aren't new news in this batch")
@@ -70,8 +69,9 @@ class Scraper(Base):
             urls.reverse()
             urls = self.db.get_not_existent_urls(urls)
             if not urls:
-                self.logger.info("There aren't new news. Sleeping "
-                                f"{HISTORIC_SLEEP_TIME} hs")
+                self.logger.info(
+                    f"There aren't new news. Sleeping {HISTORIC_SLEEP_TIME} hs"
+                )
                 sleep(HISTORIC_SLEEP_TIME)
                 continue
             self.db.insert_historic_urls(urls)
