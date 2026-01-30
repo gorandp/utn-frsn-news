@@ -1,2 +1,0 @@
-gcloud functions deploy scraper_func --entry-point main_scraper --runtime python311 --trigger-resource scraper-pubsub-topic --trigger-event google.pubsub.topic.publish --timeout 540s --env-vars-file .env.yaml
-gcloud functions deploy messenger_func --entry-point main_messenger --runtime python311 --trigger-resource messenger-pubsub-topic --trigger-event google.pubsub.topic.publish --timeout 540s --env-vars-file .env.yaml
