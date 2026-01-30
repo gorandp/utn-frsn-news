@@ -1,6 +1,6 @@
+<h1 style="text-align: center">UTN FRSN NEWS</h1>
 
-<div style="font-size: 3.5rem; text-align: center; margin-bottom: 10px;">UTN FRSN NEWS</div>
-<img src="./docs/images/logo.jpg" alt="Logo" width="150" style="margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto" />
+<img src="./docs/images/logo.jpg" alt="Logo" width="100" style="margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto" />
 
 Webpage (under construction): https://utn.gorandp.com
 
