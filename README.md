@@ -1,3 +1,5 @@
+<img src="./docs/images/logo.jpg" alt="Logo" width="100" style="margin-bottom: 15px" />
+
 # UTN FRSN News
 
 Webpage (under construction): https://utn.gorandp.com
@@ -23,21 +25,21 @@ Runs every one hour. It has 2 modalities:
 - Historic. Goes from the latest page to the current page. It's the slowest modality. Great for populating the DB.
 - Live (default). Goes from the current page to the page where it founds the first URL matching a record in DB. Each URL is assumed to be unique and unmutable, that's why we do this approach. It also checks for the older 10 results (we assume the worst case scenario, the page had an error while posting or posted a news which is older than our most recent scrapped news).
 
-After the modality is finished, all results are sorted from oldest to most recent, and inserted into `utnFrsnNewsScraper` queue in that order (so the Main scraper starts with the oldest, and so will be the Messenger).
+After the modality is finished, all results are sorted from oldest to most recent, and inserted into `utn-frsn-news-scraper` queue in that order (so the Main scraper starts with the oldest, and so will be the Messenger).
 
 ![Diagram of Index Scraper](/docs/images/indexScraper.drawio.png)
 
 ## Main Scraper
 
-It will run only one instance at a time. It is triggered by the `utnFrsnNewsScraper` queue. Extracts the whole news information (title, content, image, date) and metadata (responseElapsedTime, parseElapsedTime).
+It will run only one instance at a time. It is triggered by the `utn-frsn-news-scraper` queue. Extracts the whole news information (title, content, image, date) and metadata (responseElapsedTime, parseElapsedTime).
 
-After extraction, it inserts a task in the `utnFrsnNewsMessenger` queue.
+After extraction, it inserts a task in the `utn-frsn-news-messenger` queue.
 
 ![Diagram of Main Scraper](/docs/images/mainScraper.drawio.png)
 
 ## Messenger
 
-It will run only one instance at a time. It is triggered by the `utnFrsnNewsMessenger` queue. Retrieves the news information from D1 and sends the message via Telegram.
+It will run only one instance at a time. It is triggered by the `utn-frsn-news-messenger` queue. Retrieves the news information from D1 and sends the message via Telegram.
 
 ![Diagram of Messenger](/docs/images/messenger.drawio.png)
 
@@ -64,7 +66,7 @@ parse_elapsed_time | REAL | Seconds taken to parse the HTML
 
 ## Queues Structure
 
-### utnFrsnNewsScraper
+### utn-frsn-news-scraper
 
 Scraper queue.
 
@@ -75,7 +77,7 @@ inserted_at | | Insertion date
 updated_at | | Update date
 status | Integer | 0=unprocessed / 1=success / 99=error
 
-### utnFrsnNewsMessenger
+### utn-frsn-news-messenger
 
 Messenger queue.
 
