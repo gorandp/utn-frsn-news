@@ -5,7 +5,7 @@ from typing import Generator
 from ..logger import LogWrapper
 from .parser_feed import HistoricFeed
 from .parser_news import NewsReader
-from ..messenger.telegram import Telegram
+
 
 HISTORIC_SLEEP_TIME = 12 * 60 * 60  # 12 hours
 SCRAPER_SLEEP_TIME = 6 * 60 * 60  # 6 hours
@@ -26,7 +26,7 @@ class Scraper(LogWrapper):
         self.news_reader = NewsReader()
 
     def process_by_batch(self, urls_batch: list) -> list:
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+        with concurrent.futures.ThreadPoolExecutor() as executor:  # FIXME: use asyncio
             all_executors = []
             for url_feed in urls_batch:
                 all_executors.append(
