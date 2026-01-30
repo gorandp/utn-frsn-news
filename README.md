@@ -12,11 +12,12 @@ Scripts for data extraction and publishing of the latest news of the faculty in 
 
 > Telegram Channel: https://t.me/utnfrsnnews
 
-It mainly consists of two scripts:
+It mainly consists of four apps:
 
-- Index scraper (extracts URLs of the unprocessed news)
-- Main scraper (extracts the content of one news)
-- Messenger (send messages via Telegram)
+- [Index scraper](https://github.com/gorandp/utn-frsn-news/tree/index_scraper) (extracts URLs of the unprocessed news)
+- [Main scraper](https://github.com/gorandp/utn-frsn-news/tree/main_scraper) (extracts the content of one news)
+- [Messenger](https://github.com/gorandp/utn-frsn-news/tree/messenger) (send messages via Telegram)
+- [Webpage](https://github.com/gorandp/utn-frsn-news/tree/webpage) (to show and search news)
 
 ## Index Scraper
 
