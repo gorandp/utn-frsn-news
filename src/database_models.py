@@ -40,7 +40,7 @@ class News(Base):
     url: Mapped[str] = mapped_column(String(511), unique=True, index=True)
     title: Mapped[str] = mapped_column(String(127))
     content: Mapped[str] = mapped_column(Text)
-    photo_location: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    photo_location: Mapped[str | None] = mapped_column(String(63), nullable=True)
     photo_url: Mapped[str | None] = mapped_column(String(127), nullable=True)
     response_elapsed_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
     parse_elapsed_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
