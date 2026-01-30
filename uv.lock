@@ -477,6 +477,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "workers-py" },
+    { name = "workers-runtime-sdk" },
 ]
 
 [package.metadata]
@@ -490,7 +491,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "workers-py" }]
+dev = [
+    { name = "workers-py" },
+    { name = "workers-runtime-sdk" },
+]
 
 [[package]]
 name = "webtypy"
