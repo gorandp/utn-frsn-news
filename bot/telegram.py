@@ -10,6 +10,8 @@ MAXIMUM_RETRIES = 5
 
 CHAT_ID = '@utnfrsnnews'
 TELEGRAM_API_KEY = os.getenv('TELEGRAM_API_KEY')
+# NOTE: API Methods
+# https://core.telegram.org/bots/api#available-methods
 URL_SEND_MESSAGES = f'https://api.telegram.org/bot{TELEGRAM_API_KEY}'\
                     '/sendMessage'
 URL_SEND_PHOTO = f'https://api.telegram.org/bot{TELEGRAM_API_KEY}'\
