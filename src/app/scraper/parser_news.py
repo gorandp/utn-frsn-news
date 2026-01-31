@@ -11,10 +11,11 @@ TIMEOUT = int(os.getenv("TIMEOUT") or "60")
 
 
 class NewsReader(LogWrapper):
-    def __init__(self):
-        super().__init__(__name__)
-
-    def read_new(self, url: str, url_photo: str):
+    def read_new(
+        self,
+        url: str,
+        url_photo: str,
+    ):
         self.logger.debug(f"Getting: {url}")
         response = requests.get(url, timeout=TIMEOUT)
         self.logger.debug(f"Parsing: {url}")

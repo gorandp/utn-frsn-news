@@ -5,6 +5,7 @@ from typing import Generator
 from ..logger import LogWrapper
 from .feed import HistoricFeed
 from .parser_news import NewsReader
+from ..bot.db import BotDb
 
 
 HISTORIC_SLEEP_TIME = 12 * 60 * 60  # 12 hours

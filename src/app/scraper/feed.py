@@ -50,7 +50,7 @@ class HistoricFeed(LogWrapper):
             timeout=WORDPRESS_SITE.TIMEOUT,
         )
         soup = bs4.BeautifulSoup(
-            response.content.decode("utf-8", errors="ignore"), "lxml"
+            response.content.decode("utf-8", errors="ignore"),
         )
         return await self.get_data(soup)
 
@@ -71,7 +71,6 @@ class HistoricFeed(LogWrapper):
             response = await client.get(WORDPRESS_SITE.HISTORIC_FEED_URL)
             soup = bs4.BeautifulSoup(
                 response.content.decode("utf-8", errors="ignore"),
-                "lxml",
             )
             last_page = int(soup.select("nav > div > a.page-numbers")[-2].text)
             urls.extend(await self.get_data(soup))

@@ -7,7 +7,7 @@ LOGGER_LEVEL = getattr(
     os.getenv("LOGGER_LEVEL") or "INFO",
     logging.INFO,
 )
-LOGGER_FORMAT_STR_HEAD = "%(asctime)s - %(levelname)s - %(log_name)s - %(message)s"
+LOGGER_FORMAT_STR_HEAD = "[%(log_name)s:%(levelname)s] - %(asctime)s - %(message)s"
 
 
 def get_logger(log_name: str) -> logging.LoggerAdapter:

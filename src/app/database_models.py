@@ -44,6 +44,10 @@ class News(Base):
     photo_url: Mapped[str | None] = mapped_column(String(127), nullable=True)
     response_elapsed_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
     parse_elapsed_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
+    origin_created_at: Mapped[datetime | None] = mapped_column(
+        DateTimeString,
+        nullable=True,
+    )
     indexed_at: Mapped[datetime] = mapped_column(
         DateTimeString,
         default=lambda: datetime.now(UTC),
