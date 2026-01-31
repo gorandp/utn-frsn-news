@@ -6,8 +6,9 @@ from pyodide.ffi import to_js
 from asyncio import sleep
 from datetime import datetime, UTC
 
-from .database_models import News
-from .scraper.feed import HistoricFeed
+from app.database_models import News
+from app.scraper.feed import HistoricFeed
+from app.logger import LogWrapper
 
 
 async def index_scraper(session: Session):
@@ -33,6 +34,7 @@ async def index_scraper(session: Session):
 
 class Default(WorkerEntrypoint):
     async def fetch(self, request: Request):
+        log = LogWrapper()
         engine = create_engine_from_binding(self.env.DB)  # type: ignore
         SessionLocal = sessionmaker(bind=engine)
         with SessionLocal() as session:
@@ -76,4 +78,10 @@ class Default(WorkerEntrypoint):
                 return Response("Not Found", status=404)
 
         ## Success ;)
+        log.logger.info("Finished successfully")
         return Response("Success", status=200)
+
+    async def queue(self, batch, a, b):
+        log = LogWrapper()
+        for message in batch.messages:
+            print("Received", message)
