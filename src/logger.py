@@ -33,5 +33,5 @@ def get_logger(log_name: str) -> logging.LoggerAdapter:
 
 
 class LogWrapper:
-    def __init__(self, name: str):
-        self.logger = get_logger(name)
+    def __init__(self):
+        self.logger = get_logger(self.__module__)
