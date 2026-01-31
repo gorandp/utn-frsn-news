@@ -38,6 +38,17 @@
     }
   ],
 
+  "triggers": {
+    // Schedule cron triggers:
+    // - At every 3rd minute
+    // - At 15:00 (UTC) on first day of the month
+    // - At 23:59 (UTC) on the last weekday of the month
+    // - At every hour
+    "crons": [
+      "0 * * * *"
+    ]
+  },
+
   "queues": {
     "producers": [
       {
