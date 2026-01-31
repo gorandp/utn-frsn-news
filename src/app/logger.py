@@ -1,19 +1,24 @@
-import os
+import sys
 import logging
 
 
-LOGGER_LEVEL = getattr(
-    logging,
-    os.getenv("LOGGER_LEVEL") or "INFO",
-    logging.INFO,
-)
-LOGGER_FORMAT_STR_HEAD = "[%(log_name)s:%(levelname)s] - %(asctime)s - %(message)s"
+class LoggerConfig:
+    LOGGER_LEVEL = logging.INFO
+    LOGGER_FORMAT_STR_HEAD = "[%(log_name)s:%(levelname)s] - %(asctime)s - %(message)s"
+
+    @classmethod
+    def set_level(cls, level: str | None) -> None:
+        cls.LOGGER_LEVEL = getattr(
+            logging,
+            level or "INFO",
+            logging.INFO,
+        )
 
 
 def get_logger(log_name: str) -> logging.LoggerAdapter:
     logger = logging.getLogger(name=log_name)
 
-    logger_format_str = LOGGER_FORMAT_STR_HEAD
+    logger_format_str = LoggerConfig.LOGGER_FORMAT_STR_HEAD
     extra = {"log_name": log_name}
     l_format = logging.Formatter(logger_format_str)
 
@@ -22,16 +27,16 @@ def get_logger(log_name: str) -> logging.LoggerAdapter:
         logger = logging.LoggerAdapter(logger, extra)
         return logger
 
-    c_handler = logging.StreamHandler()
+    c_handler = logging.StreamHandler(sys.stdout)
     c_handler.setFormatter(l_format)
     logger.addHandler(c_handler)
 
-    logger.setLevel(LOGGER_LEVEL)
+    logger.setLevel(LoggerConfig.LOGGER_LEVEL)
     logger = logging.LoggerAdapter(logger, extra)
 
     return logger
 
 
 class LogWrapper:
-    def __init__(self):
-        self.logger = get_logger(self.__module__)
+    def __init__(self, log_name: str | None = None) -> None:
+        self.logger = get_logger(log_name or self.__module__)
