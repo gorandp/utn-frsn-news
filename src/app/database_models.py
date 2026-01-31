@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, UTC
 from typing import Any
 
-from sqlalchemy import Integer, Float, String, Text, ForeignKey
+from sqlalchemy import Integer, Float, String, Text, ForeignKey, event, select, func
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 
@@ -36,12 +36,11 @@ class Base(DeclarativeBase):
 class News(Base):
     __tablename__ = "news"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     url: Mapped[str] = mapped_column(String(511), unique=True, index=True)
     title: Mapped[str] = mapped_column(String(127))
     content: Mapped[str] = mapped_column(Text)
-    photo_location: Mapped[str | None] = mapped_column(String(63), nullable=True)
-    photo_url: Mapped[str | None] = mapped_column(String(127), nullable=True)
+    photo_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     response_elapsed_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
     parse_elapsed_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
     origin_created_at: Mapped[datetime | None] = mapped_column(
@@ -56,6 +55,16 @@ class News(Base):
         DateTimeString,
         default=lambda: datetime.now(UTC),
     )
+
+
+# NOTE: This is a workaround for the Cloudflare D1 dialect for
+# SQLAlchemy not supporting autoincrement for primary keys,
+# causing the id field to remain NULL during insertion
+@event.listens_for(News, "before_insert")
+def set_news_id(mapper, connection, target):
+    if target.id is None:
+        max_id = connection.execute(select(func.max(News.id))).scalar_one_or_none() or 0
+        target.id = max_id + 1
 
 
 class QueuesErrors(Base):
