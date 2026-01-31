@@ -8,6 +8,8 @@ import json
 
 from app.database_models import News, Base as DatabaseBaseModel
 from app.scraper.feed import HistoricFeed
+from app.scraper.news import NewsReader
+from app.cloudflare_images import CloudflareImages, CloudflareConfig
 from app.logger import LogWrapper, LoggerConfig
 
 
@@ -37,6 +39,45 @@ async def index_scraper(session: Session):
     return [u for u in news_urls if u[0] not in existing_urls]
 
 
+async def main_scraper(
+    session: Session,
+    news_url: str,
+    photo_url: str,
+    indexed_at: datetime,
+):
+    news_reader = NewsReader()
+    news_data = await news_reader.read_news(news_url)
+
+    image_id = None
+    image_data = await news_reader.fetch_image(photo_url)
+    if image_data:
+        news_origin_id = news_url.rsplit("=", 1)[-1]
+        image_origin_filename = photo_url.rsplit("/", 1)[-1]
+        image_filename = f"utn-frsn-news-photo-{news_origin_id}-{image_origin_filename}"
+        cloudflare_images = CloudflareImages()
+        image_id = await cloudflare_images.upload(
+            image_filename,
+            image_data,
+        )
+
+    # Insert news into DB
+    news_entry = News(
+        url=news_data["url"],
+        title=news_data["title"],
+        content=news_data["content"],
+        photo_id=image_id,
+        response_elapsed_seconds=news_data["response_elapsed_seconds"],
+        parse_elapsed_seconds=news_data["parse_elapsed_seconds"],
+        origin_created_at=news_data["origin_created_at"],
+        indexed_at=indexed_at,
+    )
+    session.add(news_entry)
+    session.commit()
+    session.refresh(news_entry)
+
+    return news_entry.id
+
+
 class EntryLogger(LogWrapper):
     pass
 
@@ -46,13 +87,19 @@ class Default(WorkerEntrypoint):
         super().__init__(ctx, env)
         LoggerConfig.set_level(self.env.LOGGER_LEVEL)
         self.logger = EntryLogger().logger
-        engine = create_engine_from_binding(self.env.DB)  # type: ignore
+        engine = create_engine_from_binding(self.env.DB)
         self.SessionLocal = sessionmaker(bind=engine)
         DatabaseBaseModel.metadata.create_all(bind=engine)
+        CloudflareConfig.setup(
+            account_id=self.env.CLOUDFLARE_ACCOUNT_ID,
+            images_account_hash=self.env.CLOUDFLARE_IMAGES_ACCOUNT_HASH,
+            images_api_token=self.env.CLOUDFLARE_IMAGES_API_TOKEN,
+        )
 
     async def fetch(self, request: Request):
         with self.SessionLocal() as session:
             ## ------> Index Scraper <------ ##
+            ## ____ WORKING - VALIDATED ____ ##
             if request.url.endswith("/start/indexScraper"):
                 news_urls = await index_scraper(session)
                 return Response(
@@ -79,8 +126,15 @@ class Default(WorkerEntrypoint):
 
             ## ------> Main Scraper <------ ##
             elif request.url.endswith("/start/mainScraper"):
+                news_url = "https://www.frsn.utn.edu.ar/?p=6569"
+                photo_url = "https://www.frsn.utn.edu.ar/wp-content/uploads/2025/12/posgrado-2026-slide.jpg"
                 # TODO: Main Scraper call
-                news_id = 1000  # FIXME: Placeholder
+                news_id = await main_scraper(
+                    session,
+                    news_url,
+                    photo_url,
+                    datetime.now(UTC),
+                )
                 await self.env.MESSENGER_QUEUE.send(
                     to_js(
                         {

@@ -1,7 +1,7 @@
 import os
 import bs4
 from pyodide.http import pyfetch
-from datetime import datetime, UTC
+from datetime import datetime
 from time import time
 
 from ..logger import LogWrapper
@@ -11,11 +11,7 @@ TIMEOUT = int(os.getenv("TIMEOUT") or "60")
 
 
 class NewsReader(LogWrapper):
-    async def read_new(
-        self,
-        url: str,
-        url_photo: str,
-    ):
+    async def read_news(self, url: str):
         # self.logger.debug(f"Getting: {url}")
         fetch_time = time()
         # TODO: abort fetch after TIMEOUT is reached
@@ -34,20 +30,25 @@ class NewsReader(LogWrapper):
         title = title.text.strip() if title else ""
         body = body.text.replace("\n", "\n\n").strip() if body else ""
         new = {
-            "publishedDatetime": datetime.fromisoformat(
+            "origin_created_at": datetime.fromisoformat(
                 str(entry_date.attrs["datetime"])
             )
             if entry_date
             else None,
-            "insertedDatetime": datetime.now(UTC),
             "url": url,
             "title": title,
-            "body": body,
-            "urlPhoto": url_photo,
-            "responseElapsedTime": fetch_time,
-            "parseElapsedTime": time() - parse_time,
+            "content": body,
+            "response_elapsed_seconds": fetch_time,
+            "parse_elapsed_seconds": time() - parse_time,
         }
-        if not url_photo:
-            del new["urlPhoto"]
         # self.logger.debug(f"Done parse of: {url}")
         return new
+
+    async def fetch_image(self, url: str | None) -> bytes | None:
+        if not url:
+            return None
+        # self.logger.debug(f"Fetching image: {url}")
+        response = await pyfetch(url)
+        content = await response.bytes()
+        # self.logger.debug(f"Done fetch of image: {url}")
+        return content

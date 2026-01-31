@@ -31,7 +31,7 @@ class Scraper(LogWrapper):
             all_executors = []
             for url_feed in urls_batch:
                 all_executors.append(
-                    executor.submit(self.news_reader.read_new, *url_feed)
+                    executor.submit(self.news_reader.read_news, *url_feed)
                 )
             all_news = []
             for e in all_executors:
