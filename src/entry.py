@@ -13,6 +13,93 @@ from app.cloudflare_images import CloudflareImages, CloudflareConfig
 from app.logger import LogWrapper, LoggerConfig
 
 
+# from contextvars import ContextVar
+# # ContextVar to handle session context safely
+# db_session: ContextVar[Session] = ContextVar("db_session")
+
+
+class QueueScraper:
+    @classmethod
+    def bulk_new(
+        cls,
+        urls_tuples: list[tuple[str, str | None]],
+        inserted_at: datetime | None = None,
+    ):
+        return [
+            cls.new(news_url, photo_url, inserted_at)
+            for news_url, photo_url in urls_tuples
+        ]
+
+    @staticmethod
+    def new(
+        news_url: str,
+        photo_url: str | None,
+        inserted_at: datetime | None = None,
+    ):
+        return {
+            "news_url": news_url,
+            "photo_url": photo_url,
+            "inserted_at": inserted_at.isoformat()
+            if inserted_at
+            else datetime.now(UTC).isoformat(),
+        }
+
+    @classmethod
+    def read(cls, message):
+        return cls(
+            news_url=message.body.news_url,
+            photo_url=message.body.photo_url,
+            inserted_at=message.body.inserted_at,
+        )
+
+    def __init__(
+        self,
+        news_url: str,
+        photo_url: str,
+        inserted_at: datetime,
+    ) -> None:
+        self.news_url = news_url
+        self.photo_url = photo_url
+        self.inserted_at = inserted_at
+
+
+class QueueMessenger:
+    @classmethod
+    def bulk_new(
+        cls,
+        news_ids: list[int],
+        inserted_at: datetime | None = None,
+    ):
+        return [cls.new(news_id, inserted_at) for news_id in news_ids]
+
+    @staticmethod
+    def new(
+        news_id: int,
+        inserted_at: datetime | None = None,
+    ):
+        return {
+            "news_id": news_id,
+            "inserted_at": inserted_at.isoformat()
+            if inserted_at
+            else datetime.now(UTC).isoformat(),
+        }
+
+    @classmethod
+    def read(cls, message):
+        return cls(
+            news_id=message.body.news_id,
+            inserted_at=message.body.inserted_at,
+        )
+
+    def __init__(
+        self,
+        news_id: int,
+        inserted_at: datetime,
+    ) -> None:
+        self.news_id = news_id
+        self.inserted_at = inserted_at
+
+
 async def index_scraper(session: Session):
     # Get latest URL from DB
     latest_url = session.execute(
@@ -174,38 +261,39 @@ class Default(WorkerEntrypoint):
         unknown1: None = None,
         unknown2: None = None,
     ):
-        self.logger.info(f"Batch queue {batch.queue}")
-        ## ------> SCRAPER_QUEUE <------ ##
-        if batch.queue == "653f3c467afd43278463cb87292d1c97":
-            self.logger.info("Processing SCRAPER_QUEUE batch")
-        ## ------> MESSENGER_QUEUE <------ ##
-        elif batch.queue == "a0f45ea683634af2a991a1dd7379f9eb":
-            self.logger.info("Processing MESSENGER_QUEUE batch")
-        ## ------> UNKNOWN (must never happen) <------ ##
-        else:
-            self.logger.error(f"Unknown queue: {batch.queue}")
-            return
-        for message in batch.messages:
-            self.logger.info(f"Received {message}")
-            # self.logger.info(f"Received dir {dir(message)}")
-            # self.logger.info(f"Received body {message.body}")
-            # self.logger.info(f"Received body dir {dir(message.body)}")
-            # self.logger.info(f"Received body news_id {message.body.news_id}")
-            # self.logger.info(f"Received body inserted_at {message.body.inserted_at}")
+        self.logger.info(f"Start batch queue {batch.queue}")
+        with self.SessionLocal() as session:
+            ## ------> SCRAPER_QUEUE <------ ##
+            if batch.queue == "653f3c467afd43278463cb87292d1c97":
+                self.logger.info("Processing SCRAPER_QUEUE batch")
+                for message in batch.messages:
+                    task = QueueScraper.read(message)
+                    news_id = await main_scraper(
+                        session,
+                        task.news_url,
+                        task.photo_url,
+                        datetime.now(UTC),
+                    )
+                    await self.env.MESSENGER_QUEUE.send(
+                        to_js(QueueMessenger.new(news_id))
+                    )
+
+            ## ------> MESSENGER_QUEUE <------ ##
+            elif batch.queue == "a0f45ea683634af2a991a1dd7379f9eb":
+                self.logger.info("Processing MESSENGER_QUEUE batch")
+                for message in batch.messages:
+                    task = QueueMessenger.read(message)
+                    self.logger.info(f"News ID to process: {task.news_id}")
+
+            ## ------> UNKNOWN (must never happen) <------ ##
+            else:
+                self.logger.error(f"Unknown queue: {batch.queue}")
+                return
 
     async def scheduled(self, controller, env, ctx):
         with self.SessionLocal() as session:
             news_urls = await index_scraper(session)
             if news_urls:
                 await self.env.SCRAPER_QUEUE.sendBatch(
-                    to_js(
-                        [
-                            {
-                                "news_url": url_tuple[0],
-                                "photo_url": url_tuple[1],
-                                "inserted_at": datetime.now(UTC).isoformat(),
-                            }
-                            for url_tuple in news_urls
-                        ]
-                    )
+                    to_js(QueueScraper.bulk_new(news_urls))
                 )
