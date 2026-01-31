@@ -3,7 +3,7 @@ from time import sleep
 from typing import Generator
 
 from ..logger import LogWrapper
-from .parser_feed import HistoricFeed
+from .feed import HistoricFeed
 from .parser_news import NewsReader
 
 
