@@ -4,7 +4,7 @@ from typing import Generator
 
 from ..logger import LogWrapper
 from .feed import HistoricFeed
-from .parser_news import NewsReader
+from .news import NewsReader
 from ..bot.db import BotDb
 
 
