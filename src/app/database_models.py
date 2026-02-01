@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, UTC
 from typing import Any
 
-from sqlalchemy import Integer, Float, String, Text, ForeignKey, event, select, func
+from sqlalchemy import Integer, Float, String, Text, event, select, func
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 
@@ -65,23 +65,3 @@ def set_news_id(mapper, connection, target):
     if target.id is None:
         max_id = connection.execute(select(func.max(News.id))).scalar_one_or_none() or 0
         target.id = max_id + 1
-
-
-class QueuesErrors(Base):
-    __tablename__ = "queues_errors"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    news_id: Mapped[int | None] = mapped_column(
-        ForeignKey("news.id"), index=True, nullable=False
-    )
-    news_url: Mapped[str | None] = mapped_column(String(511), nullable=True)
-    error_message: Mapped[str] = mapped_column(Text)
-    queue: Mapped[str] = mapped_column(String(63))
-    task_inserted_at: Mapped[datetime] = mapped_column(
-        DateTimeString,
-        nullable=True,
-    )
-    occurred_at: Mapped[datetime] = mapped_column(
-        DateTimeString,
-        default=lambda: datetime.now(UTC),
-    )
