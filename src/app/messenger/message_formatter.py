@@ -1,34 +1,35 @@
 from datetime import timedelta
 
+from ..database_models import News
 
-def get_date_msg(new_data: dict) -> str:
-    date = new_data.get("publishedDatetime", new_data["insertedDatetime"])
-    date -= timedelta(hours=3) # UTC-03
-    date_msg = f'<code>{date.replace(microsecond=0)}</code>'
-    if not new_data.get("publishedDatetime"):
-        date_msg = date_msg.replace('<code>', '<code>(scrap) ', 1)
+
+def get_date_msg(news: News) -> str:
+    date = news.origin_created_at or news.inserted_at
+    date -= timedelta(hours=3)  # UTC-03
+    date_msg = f"<code>{date.replace(microsecond=0)}</code>"
+    if not news.origin_created_at:
+        date_msg = date_msg.replace("<code>", "<code>(scrap) ", 1)
     return date_msg
 
 
-def build_message_header(new_data: dict) -> str:
+def build_message_header(news: News) -> str:
     out = []
-    out.append(get_date_msg(new_data))
-    out.append(f'<a href="{new_data["url"]}"><b>{new_data["title"]}</b></a>')
+    out.append(get_date_msg(news))
+    out.append(f'<a href="{news.url}"><b>{news.title}</b></a>')
     return "\n".join(out)
 
 
-def build_message(new_data: dict) -> str:
+def build_message(news: News) -> str:
     out = []
-    out.append(get_date_msg(new_data))
-    out.append(f'<a href="{new_data["url"]}">'
-               f'<b>{new_data["title"]}</b></a>')
-    out.append('')
-    body = new_data["body"]
+    out.append(get_date_msg(news))
+    out.append(f'<a href="{news.url}"><b>{news.title}</b></a>')
+    out.append("")
+    body = news.content
     if "&" in body:
         body = body.replace("&", "&amp")
     if "<" in body:
         body = body.replace("<", "&lt")
     if ">" in body:
         body = body.replace(">", "&gt")
-    out.append(new_data["body"])
+    out.append(body)
     return "\n".join(out)
