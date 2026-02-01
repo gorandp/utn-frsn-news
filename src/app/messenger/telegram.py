@@ -1,20 +1,9 @@
-import os
-import requests
-from time import sleep
+import asyncio
+from pyodide.http import pyfetch
 from typing import Generator
+import json
 
 from ..logger import LogWrapper
-
-
-DEFAULT_RETRY_SLEEP = 5  # seconds
-MAXIMUM_RETRIES = 5
-
-CHAT_ID = "@utnfrsnnews"
-TELEGRAM_API_KEY = os.getenv("TELEGRAM_API_KEY")
-# NOTE: API Methods
-# https://core.telegram.org/bots/api#available-methods
-URL_SEND_MESSAGES = f"https://api.telegram.org/bot{TELEGRAM_API_KEY}/sendMessage"
-URL_SEND_PHOTO = f"https://api.telegram.org/bot{TELEGRAM_API_KEY}/sendPhoto"
 
 
 def chunk_message(sequence: str) -> Generator[str, None, None]:
@@ -23,24 +12,61 @@ def chunk_message(sequence: str) -> Generator[str, None, None]:
 
 
 class Telegram(LogWrapper):
-    def __init__(self):
-        super().__init__(__name__)
+    CHAT_ID: str = "@utnfrsnnewsdebug"  # "@utnfrsnnews"
+    TELEGRAM_API_KEY: str = ""
+    URL_SEND_MESSAGES: str = ""
+    URL_SEND_PHOTO: str = ""
+    DEFAULT_RETRY_SLEEP: int = 5  # seconds
+    MAXIMUM_RETRIES: int = 5
+    SILENT_MODE: bool = False
 
-    def send_message(self, _id: str, message: str) -> bool:
-        self.logger.info(f"[{_id}] Sending message")
+    @classmethod
+    def setup_config(
+        cls,
+        chat_id: str = "",
+        telegram_api_key: str = "",
+        silent_mode: bool = False,
+    ) -> None:
+        if chat_id:
+            cls.CHAT_ID = chat_id
+        if telegram_api_key:
+            cls.TELEGRAM_API_KEY = telegram_api_key
+            # NOTE: API Methods
+            # https://core.telegram.org/bots/api#available-methods
+            cls.URL_SEND_MESSAGES = (
+                f"https://api.telegram.org/bot{telegram_api_key}/sendMessage"
+            )
+            cls.URL_SEND_PHOTO = (
+                f"https://api.telegram.org/bot{telegram_api_key}/sendPhoto"
+            )
+        if silent_mode:
+            cls.SILENT_MODE = silent_mode
+
+    async def send_message(self, news_id: int, message: str) -> bool:
+        if self.TELEGRAM_API_KEY == "":
+            self.logger.error("Telegram API Key is not set up")
+            return False
+        self.logger.info(f"[{news_id}] Sending message")
         for _message in chunk_message(message):
             try_counter = 1
             while True:
                 body = {
-                    "chat_id": CHAT_ID,
+                    "chat_id": self.CHAT_ID,
                     "text": _message,
                     "parse_mode": "HTML",
                     # NOTE: Useful when sending a lot of messages
-                    # 'disable_notification': True,
+                    "disable_notification": self.SILENT_MODE,
                 }
-                response = requests.post(URL_SEND_MESSAGES, json=body)
-                if response.status_code != 200 and try_counter > MAXIMUM_RETRIES:
-                    response = response.json()
+                response = await pyfetch(
+                    self.URL_SEND_MESSAGES,
+                    method="POST",
+                    headers={
+                        "Content-Type": "application/json",
+                    },
+                    body=json.dumps(body),
+                )
+                if response.status != 200 and try_counter > self.MAXIMUM_RETRIES:
+                    response = await response.json()
                     self.logger.error(
                         f"Couldn't send message after "
                         f"{try_counter} tries | "
@@ -48,31 +74,34 @@ class Telegram(LogWrapper):
                         f"{response['description']}"
                     )
                     return False
-                if response.status_code == 429:
+                if response.status == 429:
                     try_counter += 1
-                    seconds = response.json()["parameters"]["retry_after"]
+                    seconds = (await response.json())["parameters"]["retry_after"]
                     self.logger.warning(
                         f"Too many requests. Retry in {seconds} seconds"
                     )
-                    sleep(seconds)
+                    await asyncio.sleep(seconds)
                     continue
-                if response.status_code != 200:
+                if response.status != 200:
                     try_counter += 1
-                    response = response.json()
+                    response = await response.json()
                     self.logger.error(
                         f"Couldn't send message (try in "
-                        f"{DEFAULT_RETRY_SLEEP}s) | "
+                        f"{self.DEFAULT_RETRY_SLEEP}s) | "
                         f"{response['error_code']} | "
                         f"{response['description']}"
                     )
-                    sleep(DEFAULT_RETRY_SLEEP)
+                    await asyncio.sleep(self.DEFAULT_RETRY_SLEEP)
                     continue
                 break
-        self.logger.info(f"[{_id}] Message sent")
+        self.logger.info(f"[{news_id}] Message sent")
         return True
 
-    def send_photo(self, _id: str, photo_url: str, caption: str) -> bool:
-        self.logger.info(f"[{_id}] Sending photo")
+    async def send_photo(self, news_id: int, photo_url: str, caption: str) -> bool:
+        if self.TELEGRAM_API_KEY == "":
+            self.logger.error("Telegram API Key is not set up")
+            return False
+        self.logger.info(f"[{news_id}] Sending photo")
         try_counter = 1
         while True:
             if len(caption) > 1024:
@@ -81,16 +110,23 @@ class Telegram(LogWrapper):
                 )
                 caption = caption[:1024]
             body = {
-                "chat_id": CHAT_ID,
+                "chat_id": self.CHAT_ID,
                 "photo": photo_url,
                 "caption": caption,
                 "parse_mode": "HTML",
                 # NOTE: Useful when sending a lot of messages
-                # 'disable_notification': True,
+                "disable_notification": self.SILENT_MODE,
             }
-            response = requests.post(URL_SEND_PHOTO, json=body)
-            if response.status_code != 200 and try_counter > MAXIMUM_RETRIES:
-                response = response.json()
+            response = await pyfetch(
+                self.URL_SEND_PHOTO,
+                method="POST",
+                headers={
+                    "Content-Type": "application/json",
+                },
+                body=json.dumps(body),
+            )
+            if response.status != 200 and try_counter > self.MAXIMUM_RETRIES:
+                response = await response.json()
                 self.logger.error(
                     f"Couldn't send message after "
                     f"{try_counter} tries | "
@@ -98,15 +134,15 @@ class Telegram(LogWrapper):
                     f"{response['description']}"
                 )
                 return False
-            if response.status_code == 429:
+            if response.status == 429:
                 try_counter += 1
-                seconds = response.json()["parameters"]["retry_after"]
+                seconds = (await response.json())["parameters"]["retry_after"]
                 self.logger.warning(f"Too many requests. Retry in {seconds} seconds")
-                sleep(seconds)
+                await asyncio.sleep(seconds)
                 continue
-            if response.status_code != 200:
+            if response.status != 200:
                 try_counter += 1
-                response = response.json()
+                response = await response.json()
                 if (
                     response["description"]
                     == "Bad Request: wrong file identifier/HTTP URL specified"
@@ -118,15 +154,15 @@ class Telegram(LogWrapper):
                     )
                     message = f'<a href="{photo_url}">FOTO</a> (no se pudo '
                     message += "cargar la foto)\n\n" + caption
-                    return self.send_message(_id, message)
+                    return await self.send_message(news_id, message)
                 self.logger.error(
                     f"Couldn't send message with photo (try in "
-                    f"{DEFAULT_RETRY_SLEEP}s) | "
+                    f"{self.DEFAULT_RETRY_SLEEP}s) | "
                     f"{response['error_code']} | "
                     f"{response['description']}"
                 )
-                sleep(DEFAULT_RETRY_SLEEP)
+                await asyncio.sleep(self.DEFAULT_RETRY_SLEEP)
                 continue
             break
-        self.logger.info(f"[{_id}] Photo sent")
+        self.logger.info(f"[{news_id}] Photo sent")
         return True
