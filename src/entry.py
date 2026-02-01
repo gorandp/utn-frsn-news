@@ -1,16 +1,16 @@
-from workers import Response, WorkerEntrypoint, Request
+from datetime import datetime, UTC
+from workers import WorkerEntrypoint  # , Response, Request
+from pyodide.ffi import to_js
 from sqlalchemy_cloudflare_d1 import create_engine_from_binding  # type: ignore
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import select
-from pyodide.ffi import to_js
-from datetime import datetime, UTC
-import json
 
+import app.constants as cts
+from app.logger import LogWrapper, LoggerConfig
 from app.database_models import News, Base as DatabaseBaseModel
+from app.cloudflare_images import CloudflareImages, CloudflareConfig
 from app.scraper.feed import HistoricFeed
 from app.scraper.news import NewsReader
-from app.cloudflare_images import CloudflareImages, CloudflareConfig
-from app.logger import LogWrapper, LoggerConfig
 from app.messenger.telegram import Telegram
 from app.messenger.message_formatter import build_message, build_message_header
 
@@ -28,7 +28,13 @@ class QueueScraper:
         inserted_at: datetime | None = None,
     ):
         return [
-            cls.new(news_url, photo_url, inserted_at)
+            {
+                "body": cls.new(
+                    news_url,
+                    photo_url,
+                    inserted_at,
+                )
+            }
             for news_url, photo_url in urls_tuples
         ]
 
@@ -72,7 +78,15 @@ class QueueMessenger:
         news_ids: list[int],
         inserted_at: datetime | None = None,
     ):
-        return [cls.new(news_id, inserted_at) for news_id in news_ids]
+        return [
+            {
+                "body": cls.new(
+                    news_id,
+                    inserted_at,
+                )
+            }
+            for news_id in news_ids
+        ]
 
     @staticmethod
     def new(
@@ -213,77 +227,13 @@ class Default(WorkerEntrypoint):
             silent_mode=getattr(self.env, "TELEGRAM_SILENT_MODE", "").lower() == "true",
         )
 
-    async def fetch(self, request: Request):
+    async def scheduled(self, controller, env, ctx):
         with self.SessionLocal() as session:
-            ## ------> Index Scraper <------ ##
-            ## ____ WORKING - VALIDATED ____ ##
-            if request.url.endswith("/start/indexScraper"):
-                news_urls = await index_scraper(session)
-                return Response(
-                    body=json.dumps({"news_urls": news_urls}),
-                    headers={"Content-Type": "application/json"},
-                    status=200,
+            news_urls = await index_scraper(session)
+            if news_urls:
+                await self.env.SCRAPER_QUEUE.sendBatch(
+                    to_js(QueueScraper.bulk_new(news_urls))
                 )
-
-            elif request.url.endswith("/start/indexScraperPlusQueue"):
-                news_urls = await index_scraper(session)
-                if news_urls:
-                    await self.env.SCRAPER_QUEUE.sendBatch(
-                        to_js(
-                            [
-                                {
-                                    "news_url": url_tuple[0],
-                                    "photo_url": url_tuple[1],
-                                    "inserted_at": datetime.now(UTC).isoformat(),
-                                }
-                                for url_tuple in news_urls
-                            ]
-                        )
-                    )
-
-            ## ------> Main Scraper <------ ##
-            elif request.url.endswith("/start/mainScraper"):
-                news_url = "https://www.frsn.utn.edu.ar/?p=6569"
-                photo_url = "https://www.frsn.utn.edu.ar/wp-content/uploads/2025/12/posgrado-2026-slide.jpg"
-                # TODO: Main Scraper call
-                news_id = await main_scraper(
-                    session,
-                    news_url,
-                    photo_url,
-                    datetime.now(UTC),
-                )
-                await self.env.MESSENGER_QUEUE.send(
-                    to_js(
-                        {
-                            "url": "/start/messenger",
-                            "news_id": news_id,
-                            "inserted_at": datetime.now(UTC).isoformat(),
-                        }
-                    )
-                )
-                await self.env.SCRAPER_QUEUE.send(
-                    to_js(
-                        {
-                            "news_url": "https//example.com/news/1",
-                            "photo_url": "https//example.com/photos/1",
-                            "inserted_at": datetime.now(UTC).isoformat(),
-                        }
-                    )
-                )
-
-            ## ------> Messenger <------ ##
-            elif request.url.endswith("/start/messenger"):
-                # TODO: Messenger call
-                pass
-
-            ## ------> UNKNOWN (must never happen) <------ ##
-            else:
-                return Response("Not Found", status=404)
-
-        ## Success ;)
-        # self.logger.info("Finished successfully")
-        # self.logger.error("Finished with errors")
-        return Response("Success", status=200)
 
     async def queue(
         self,
@@ -313,17 +263,38 @@ class Default(WorkerEntrypoint):
                 self.logger.info("Processing MESSENGER_QUEUE batch")
                 for message in batch.messages:
                     task = QueueMessenger.read(message)
-                    self.logger.info(f"News ID to process: {task.news_id}")
+                    try:
+                        self.logger.info(f"News ID to process: {task.news_id}")
+                        await messenger(
+                            session,
+                            task.news_id,
+                        )
+                    except Exception as e:
+                        self.logger.error(
+                            f"[{task.news_id}] Error sending message: {e}"
+                        )
+                        telegram = Telegram()
+                        await telegram.send_message(
+                            task.news_id,
+                            f"Error sending message: {e}",
+                            chat_id=cts.TELEGRAM_CHANNEL_DEBUG,
+                        )
 
             ## ------> UNKNOWN (must never happen) <------ ##
             else:
                 self.logger.error(f"Unknown queue: {batch.queue}")
                 return
 
-    async def scheduled(self, controller, env, ctx):
-        with self.SessionLocal() as session:
-            news_urls = await index_scraper(session)
-            if news_urls:
-                await self.env.SCRAPER_QUEUE.sendBatch(
-                    to_js(QueueScraper.bulk_new(news_urls))
-                )
+    # async def fetch(self, request: Request):
+    #     with self.SessionLocal() as session:
+    #         if request.url.endswith("/start/testSomething"):
+    #             pass
+
+    #         ## ------> UNKNOWN (must never happen) <------ ##
+    #         else:
+    #             return Response("Not Found", status=404)
+
+    #     ## Success ;)
+    #     # self.logger.info("Finished successfully")
+    #     # self.logger.error("Finished with errors")
+    #     return Response("Success", status=200)
