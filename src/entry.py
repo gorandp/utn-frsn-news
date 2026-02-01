@@ -11,6 +11,8 @@ from app.scraper.feed import HistoricFeed
 from app.scraper.news import NewsReader
 from app.cloudflare_images import CloudflareImages, CloudflareConfig
 from app.logger import LogWrapper, LoggerConfig
+from app.messenger.telegram import Telegram
+from app.messenger.message_formatter import build_message, build_message_header
 
 
 # from contextvars import ContextVar
@@ -165,6 +167,29 @@ async def main_scraper(
     return news_entry.id
 
 
+async def messenger(
+    session: Session,
+    news_id: int,
+):
+    news_entry = session.get(News, news_id)
+    if not news_entry:
+        raise ValueError(f"News with ID {news_id} not found")
+    photo_url = None
+    if news_entry.photo_id:
+        photo_url = CloudflareImages.get_public_url(news_entry.photo_id)
+
+    message = build_message(news_entry)
+    message_header = build_message_header(news_entry)
+    telegram = Telegram()
+    if photo_url:
+        r = await telegram.send_photo(news_id, photo_url, message_header)
+        if r is False:
+            raise ValueError("Failed to send photo via Telegram")
+    r = await telegram.send_message(news_id, message)
+    if r is False:
+        raise ValueError("Failed to send message via Telegram")
+
+
 class EntryLogger(LogWrapper):
     pass
 
@@ -181,6 +206,11 @@ class Default(WorkerEntrypoint):
             account_id=self.env.CLOUDFLARE_ACCOUNT_ID,
             images_account_hash=self.env.CLOUDFLARE_IMAGES_ACCOUNT_HASH,
             images_api_token=self.env.CLOUDFLARE_IMAGES_API_TOKEN,
+        )
+        Telegram.setup_config(
+            chat_id=self.env.TELEGRAM_CHAT_ID,
+            telegram_api_key=self.env.TELEGRAM_API_KEY,
+            silent_mode=getattr(self.env, "TELEGRAM_SILENT_MODE", "").lower() == "true",
         )
 
     async def fetch(self, request: Request):
