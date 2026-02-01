@@ -248,15 +248,24 @@ class Default(WorkerEntrypoint):
                 self.logger.info("Processing SCRAPER_QUEUE batch")
                 for message in batch.messages:
                     task = QueueScraper.read(message)
-                    news_id = await main_scraper(
-                        session,
-                        task.news_url,
-                        task.photo_url,
-                        datetime.now(UTC),
-                    )
-                    await self.env.MESSENGER_QUEUE.send(
-                        to_js(QueueMessenger.new(news_id))
-                    )
+                    try:
+                        news_id = await main_scraper(
+                            session,
+                            task.news_url,
+                            task.photo_url,
+                            datetime.now(UTC),
+                        )
+                        await self.env.MESSENGER_QUEUE.send(
+                            to_js(QueueMessenger.new(news_id))
+                        )
+                    except Exception as e:
+                        self.logger.error(f"[{task.news_url}] Error scraping news: {e}")
+                        telegram = Telegram()
+                        await telegram.send_message(
+                            0,
+                            f"[SCRAPER ERROR] [{task.news_url}] Error scraping news: {e}",
+                            chat_id=cts.TELEGRAM_CHANNEL_DEBUG,
+                        )
 
             ## ------> MESSENGER_QUEUE <------ ##
             elif batch.queue == "a0f45ea683634af2a991a1dd7379f9eb":
@@ -276,7 +285,7 @@ class Default(WorkerEntrypoint):
                         telegram = Telegram()
                         await telegram.send_message(
                             task.news_id,
-                            f"Error sending message: {e}",
+                            f"[{task.news_id}] Error sending message: {e}",
                             chat_id=cts.TELEGRAM_CHANNEL_DEBUG,
                         )
 
