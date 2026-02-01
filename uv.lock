@@ -369,16 +369,16 @@ wheels = [
 
 [[package]]
 name = "sqlalchemy-cloudflare-d1"
-version = "0.3.4"
+version = "0.3.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "sqlalchemy" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/31/a5/f9e038056d4c523f6781c6a4dac2f60d16846dd97342981f6e5d7cd236e6/sqlalchemy_cloudflare_d1-0.3.4.tar.gz", hash = "sha256:09ef87cf3055c94362acaadcdb66239406456bc777aeb53d768c0f1cdb53c398", size = 402016, upload-time = "2026-01-15T00:41:39.147Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bc/4d/732bfd974d3479e4940c1302db9895f7c7df6180fa9aedf6955ae0b1d591/sqlalchemy_cloudflare_d1-0.3.5.tar.gz", hash = "sha256:da794fcda9efbd6a4bb773ec1d50fe7185c70c63fbeccb7ab7db7e3cbcd41d2e", size = 404531, upload-time = "2026-01-31T02:42:49.917Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d9/ef/6c1a5f37408c1c6fe9553df60c3955d82534a3e7dd59e1f292e566b8a608/sqlalchemy_cloudflare_d1-0.3.4-py3-none-any.whl", hash = "sha256:ecb11927b6c78f14a132c905874dc8392b6044a02b5eaac4186260d92f3e9387", size = 26065, upload-time = "2026-01-15T00:41:37.702Z" },
+    { url = "https://files.pythonhosted.org/packages/da/d2/4fd81f5dcaa147960c79d392985c37a0f2a34ba567eaa2183b6146645694/sqlalchemy_cloudflare_d1-0.3.5-py3-none-any.whl", hash = "sha256:12f1029d9ff2f5d99d901eada3aee6b474293038b9708915e5a1342fbd6ffb2b", size = 26840, upload-time = "2026-01-31T02:42:48.029Z" },
 ]
 
 [[package]]
@@ -422,7 +422,7 @@ requires-dist = [
     { name = "beautifulsoup4", specifier = ">=4.14.3" },
     { name = "requests", specifier = ">=2.32.5" },
     { name = "sqlalchemy", specifier = ">=2.0.46" },
-    { name = "sqlalchemy-cloudflare-d1", specifier = ">=0.3.4" },
+    { name = "sqlalchemy-cloudflare-d1", specifier = ">=0.3.5" },
     { name = "webtypy", specifier = ">=0.1.7" },
 ]
 

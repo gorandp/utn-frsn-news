@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, UTC
 from typing import Any
 
-from sqlalchemy import Integer, Float, String, Text, event, select, func
+from sqlalchemy import Integer, Float, String, Text
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 
@@ -55,13 +55,3 @@ class News(Base):
         DateTimeString,
         default=lambda: datetime.now(UTC),
     )
-
-
-# NOTE: This is a workaround for the Cloudflare D1 dialect for
-# SQLAlchemy not supporting autoincrement for primary keys,
-# causing the id field to remain NULL during insertion
-@event.listens_for(News, "before_insert")
-def set_news_id(mapper, connection, target):
-    if target.id is None:
-        max_id = connection.execute(select(func.max(News.id))).scalar_one_or_none() or 0
-        target.id = max_id + 1
