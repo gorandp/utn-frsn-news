@@ -120,7 +120,7 @@ class Default(WorkerEntrypoint):
         self.logger = EntryLogger().logger
         engine = create_engine_from_binding(self.env.DB)
         self.SessionLocal = sessionmaker(bind=engine)
-        DatabaseBaseModel.metadata.create_all(bind=engine)
+        DatabaseBaseModel.metadata.create_all(bind=engine)  # Create tables if not exist
         CloudflareConfig.setup(
             account_id=self.env.CLOUDFLARE_ACCOUNT_ID,
             images_account_hash=self.env.CLOUDFLARE_IMAGES_ACCOUNT_HASH,
@@ -140,9 +140,11 @@ class Default(WorkerEntrypoint):
         with self.SessionLocal() as session:
             news_urls = await index_scraper(session)
             if news_urls:
-                await self.env.SCRAPER_QUEUE.sendBatch(
-                    to_js(QueueScraper.bulk_new(news_urls))
-                )
+                tasks = QueueScraper.bulk_new(news_urls)
+                for i in range(0, len(tasks), 100):
+                    # Max 100 messages per batch
+                    batch = tasks[i : i + 100]
+                    await self.env.SCRAPER_QUEUE.sendBatch(to_js(batch))
 
     # Queue Worker
     # Main Scraper and Messenger Worker
