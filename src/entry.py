@@ -127,11 +127,15 @@ class Default(WorkerEntrypoint):
             images_api_token=self.env.CLOUDFLARE_IMAGES_API_TOKEN,
         )
         Telegram.setup_config(
-            chat_id=self.env.TELEGRAM_CHAT_ID,
+            chat_id=cts.TELEGRAM_CHANNEL_PROD
+            if self.env.TELEGRAM_CHAT_ENV == "prod"
+            else cts.TELEGRAM_CHANNEL_DEBUG,
             telegram_api_key=self.env.TELEGRAM_API_KEY,
             silent_mode=getattr(self.env, "TELEGRAM_SILENT_MODE", "").lower() == "true",
         )
 
+    # Scheduled Worker
+    # Index Scraper
     async def scheduled(self, controller, env, ctx):
         with self.SessionLocal() as session:
             news_urls = await index_scraper(session)
@@ -140,6 +144,8 @@ class Default(WorkerEntrypoint):
                     to_js(QueueScraper.bulk_new(news_urls))
                 )
 
+    # Queue Worker
+    # Main Scraper and Messenger Worker
     async def queue(
         self,
         batch,

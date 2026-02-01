@@ -27,7 +27,14 @@
   },
 
   "vars": {
-    "TELEGRAM_API_KEY": "NULL"
+    "TELEGRAM_CHAT_ENV": "dev", // CHANGE TO "prod" FOR PROD ENVIRONMENT
+    "TELEGRAM_API_KEY": "", // SECRET
+    "TELEGRAM_SILENT_MODE": "false",
+    "CLOUDFLARE_ACCOUNT_ID": "", // SECRET
+    "CLOUDFLARE_IMAGES_ACCOUNT_HASH": "", // SECRET
+    "CLOUDFLARE_IMAGES_API_TOKEN": "", // SECRET
+    "LOGGER_LEVEL": "INFO",
+    "TIMEOUT": "180"
   },
 
   "d1_databases": [
