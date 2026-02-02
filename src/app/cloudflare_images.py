@@ -1,3 +1,4 @@
+# import os
 from pyodide.ffi import to_js
 from pyodide.http import pyfetch
 from .logger import LogWrapper
@@ -7,6 +8,7 @@ class CloudflareConfig:
     ACCOUNT_ID: str = ""
     IMAGES_ACCOUNT_HASH: str = ""
     IMAGES_API_TOKEN: str = ""
+    # LOCAL_STORE: bool = True  # For testing without uploading to Cloudflare
 
     @classmethod
     def setup(
@@ -46,6 +48,18 @@ class CloudflareImages(LogWrapper):
         :return: Image ID
         :rtype: str | None
         """
+        # if CloudflareConfig.LOCAL_STORE:
+        #     with open(
+        #         os.path.join(
+        #             os.getcwd(),
+        #             "cloudflare_images",
+        #             image_filename,
+        #         ),
+        #         "wb",
+        #     ) as fp:
+        #         fp.write(image_data)
+        #     return image_filename  # Use filename as ID in local store mode
+
         from js import Blob, FormData
 
         blob = Blob.new(to_js([image_data]))
