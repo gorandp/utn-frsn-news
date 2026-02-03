@@ -60,21 +60,21 @@
     "producers": [
       {
         "binding": "SCRAPER_QUEUE",
-        "queue": "653f3c467afd43278463cb87292d1c97"
+        "queue": "utn-frsn-news-scraper"
       },
       {
         "binding": "MESSENGER_QUEUE",
-        "queue": "a0f45ea683634af2a991a1dd7379f9eb"
+        "queue": "utn-frsn-news-messenger"
       }
     ],
     "consumers": [
       {
-        "queue": "653f3c467afd43278463cb87292d1c97",
+        "queue": "utn-frsn-news-scraper",
         "max_batch_size": 50,
         "dead_letter_queue": "utn-frsn-news-dlq-scraper"
       },
       {
-        "queue": "a0f45ea683634af2a991a1dd7379f9eb",
+        "queue": "utn-frsn-news-messenger",
         "max_batch_size": 50,
         "dead_letter_queue": "utn-frsn-news-dlq-messenger"
       }

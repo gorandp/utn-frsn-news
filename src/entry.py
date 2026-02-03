@@ -159,7 +159,7 @@ class Default(WorkerEntrypoint):
         self.logger.info(f"Start batch queue {batch.queue}")
         with self.SessionLocal() as session:
             ## ------> SCRAPER_QUEUE <------ ##
-            if batch.queue == "653f3c467afd43278463cb87292d1c97":
+            if batch.queue == "utn-frsn-news-scraper":
                 self.logger.info("Processing SCRAPER_QUEUE batch")
                 for message in batch.messages:
                     task = QueueScraper.read(message)
@@ -183,7 +183,7 @@ class Default(WorkerEntrypoint):
                         )
 
             ## ------> MESSENGER_QUEUE <------ ##
-            elif batch.queue == "a0f45ea683634af2a991a1dd7379f9eb":
+            elif batch.queue == "utn-frsn-news-messenger":
                 self.logger.info("Processing MESSENGER_QUEUE batch")
                 for message in batch.messages:
                     task = QueueMessenger.read(message)
