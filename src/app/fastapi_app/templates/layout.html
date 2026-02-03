@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UTN FRSN News</title>
+  <title>UTN FRSN Noticias</title>
   
   <meta name="author" content="Goran Prpic">
-  <meta name="description" content="All news from UTN FRSN">
+  <meta name="description" content="Todas las noticias de la UTN Facultad Regional San Nicolás">
 
-  <meta property="og:title" content="UTN FRSN News">
-  <meta property="og:description" content="All news from UTN FRSN">
+  <meta property="og:title" content="UTN FRSN Noticias">
+  <meta property="og:description" content="Todas las noticias de la UTN Facultad Regional San Nicolás">
   <meta property="og:type" content="website">
   <meta property="og:url" content="http://utn.gorandp.com/">
   <meta property="og:image" content="http://utn.gorandp.com/static/images/preview.png">
-  <meta property="og:image:alt" content="UTN FRSN News Preview Image">
+  <meta property="og:image:alt" content="UTN FRSN Noticias Preview Image">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,7 +21,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
   <link rel="stylesheet" href="/static/css/main.css">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#000000">
 
   <link rel="icon" href="/static/icons/favicon.ico" type="image/x-icon">
   <link rel="android-chrome" sizes="512x512" href="/static/icons/android-chrome-512x512.png">
@@ -30,29 +30,85 @@
 
   <link rel="manifest" href="/static/site.webmanifest">
 </head>
-<body class="flex flex-col min-h-screen font-roboto">
-  <nav class="bg-gray-700 text-white border-b-2 py-1 px-7 flex flex-row items-center justify-between">
-    <div class="flex flex-row items-center gap-4 m-2">
-      <div class="rounded-lg overflow-hidden">
-        <img src="/static/icons/logo.jpg" width="60" height="60" alt="Logo">
+<body class="flex flex-col min-h-screen">
+  <nav class="bg-gradient-to-r from-slate-900 to-black text-white border-b-4 border-sky-500 shadow-lg py-3 px-7 flex flex-row items-center justify-between">
+    <div class="flex flex-row items-center gap-10">
+      <div class="bg-white/10 rounded-lg p-1 overflow-hidden shadow-md">
+        <img src="/static/icons/logo.jpg" width="50" height="50" alt="Logo">
       </div>
-      <a href="/" class="text-lg font-bold">UTN FRSN News</a>
+      <div class="flex items-center gap-2">
+        <i data-lucide="newspaper" class="w-6 h-6 text-sky-400"></i>
+        <a href="/" class="text-xl font-bold hover:text-sky-300 transition-colors duration-200">UTN FRSN Noticias</a>
+      </div>
     </div>
-    <div>
-      <div class="bg-gray-900 hover:bg-gray-800 border-2 border-transparent hover:border-white rounded">
-        <a href="/login" class="p-2 block"><i data-lucide="log-in"></i></a>
-      </div>
+    <div class="flex items-center gap-2">
+      <a href="https://t.me/utnfrsnnews"
+        class="bg-sky-700 hover:bg-sky-900
+          border-2 border-transparent hover:border-sky-200
+          text-white
+          px-5 py-1 rounded-lg
+          flex items-center gap-2 transition-all duration-200
+          shadow-md hover:shadow-lg"
+        target="_blank"
+        >
+        <img src="/static/icons/telegram-logo.png" alt="Telegram Logo" class="w-4 h-4">
+        Canal de Telegram
+      </a>
+      <a href="https://github.com/gorandp/utn-frsn-news"
+        class="bg-sky-700 hover:bg-sky-900
+          border-2 border-transparent hover:border-sky-200
+          text-white
+          p-2 rounded-lg
+          flex items-center gap-2 transition-all duration-200
+          shadow-md hover:shadow-lg"
+        target="_blank"
+        >
+        <i data-lucide="github" class="w-4 h-4"></i>
+      </a>
+      <a href="/login"
+        class="bg-sky-700 hover:bg-sky-900
+          border-2 border-transparent hover:border-sky-200
+          text-white
+          p-2 rounded-lg
+          flex items-center gap-2 transition-all duration-200
+          shadow-md hover:shadow-lg"
+        >
+        <i data-lucide="log-in" class="w-4 h-4"></i>
+      </a>
     </div>
   </nav>
 
-  {% block content %}
-  {% endblock content %}
+  <div class="flex-1 shadow-inner
+    font-roboto text-white
+    bg-gradient-to-r from-slate-700 to-slate-900"
+  >
+    {% block content %}
+    {% endblock content %}
+  </div>
 
-  <footer class="flex flex-col justify-center 
-        items-center bg-gray-700 text-white
-        mt-auto py-12
-        xl:px-40 md:px-17 sm:px-10 px-5">
-    <p>&copy; 2026 UTN FRSN News. All rights reserved.</p>
+  <footer class="bg-gradient-to-r from-slate-900 to-black shadow-lg">
+    <div class="flex flex-col sm:flex-row justify-between gap-2 items-center text-white max-w-xl mx-auto py-6 px-4">
+      <div class="flex flex-col gap-2">
+        <a href="https://github.com/gorandp/utn-frsn-news"
+          target="_blank"
+          class="text-center text-white
+            bg-sky-600/70 px-4 py-2 rounded-lg
+            border-2 border-transparent
+            hover:bg-sky-800 hover:border-sky-200 transition-colors duration-200
+            flex items-center gap-2"
+        >
+          <i data-lucide="github" class="w-4 h-4"></i>
+          Github repo
+        </a>
+      </div>
+      <div class="flex flex-col gap-2">
+        <p class="text-center text-gray-300">&copy; 2026 gorandp. All rights reserved.</p>
+        <p class="text-center text-gray-300 flex items-center gap-2">
+          <i data-lucide="code" class="w-4 h-4"></i>
+          Built with FastAPI and Tailwind CSS.
+        </p>
+      </div>
+    </div>
   </footer>
 
 
