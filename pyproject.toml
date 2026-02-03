@@ -1,0 +1,18 @@
+[project]
+name = "utn-frsn-news"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "beautifulsoup4>=4.14.3",
+    "sqlalchemy>=2.0.46",
+    "sqlalchemy-cloudflare-d1>=0.3.5",
+    "webtypy>=0.1.7",
+]
+
+[dependency-groups]
+dev = [
+    "workers-py",
+    "workers-runtime-sdk"
+]

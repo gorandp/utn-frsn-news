@@ -1,132 +1,131 @@
-# UTN FRSN News
+<h1 style="text-align: center">UTN FRSN NEWS</h1>
 
-## Introducción
+<img src="./docs/images/logo.jpg" alt="Logo" width="100" style="margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto" />
 
-Scripts para la obtención y publicación de las últimas noticias de la facultad en una canal de Telegram.
+Webpage (under construction): https://utn.gorandp.com
 
-> Canal de Telegram: https://t.me/utnfrsnnews
+Telegram Channel: https://t.me/utnfrsnnews
 
-Consta de dos scripts principales:
+## Introduction
 
-- Scraper (obtención de datos)
-- Messenger (envío de mensajes por Telegram)
+Scripts for data extraction and publishing of the latest news of the faculty in a Telegram channel.
 
-## Scraper
+> Telegram Channel: https://t.me/utnfrsnnews
 
-Corre a cada hora y obtiene el histórico de las noticias (no hay otra forma). Compara las URLs de estas noticias con las existentes en la base de datos. Si hay alguna URL que no está en la DB, entonces procede a scrapear la noticia e insertar una tarea en la cola de mensajeo para que más tarde se envie por Telegram.
+It mainly consists of four apps:
+
+- [Index scraper](https://github.com/gorandp/utn-frsn-news/tree/index_scraper) (extracts URLs of the unprocessed news)
+- [Main scraper](https://github.com/gorandp/utn-frsn-news/tree/main_scraper) (extracts the content of one news)
+- [Messenger](https://github.com/gorandp/utn-frsn-news/tree/messenger) (send messages via Telegram)
+- [Webpage](https://github.com/gorandp/utn-frsn-news/tree/webpage) (to show and search news)
+
+## Index Scraper
+
+Runs every one hour. It has 2 modalities:
+
+- Historic. Goes from the latest page to the current page. It's the slowest modality. Great for populating the DB.
+- Live (default). Goes from the current page to the page where it founds the first URL matching a record in DB. Each URL is assumed to be unique and unmutable, that's why we do this approach. It also checks for the older 10 results (we assume the worst case scenario, the page had an error while posting or posted a news which is older than our most recent scrapped news).
+
+After the modality is finished, all results are sorted from oldest to most recent, and inserted into `utn-frsn-news-scraper` queue in that order (so the Main scraper starts with the oldest, and so will be the Messenger).
+
+![Diagram of Index Scraper](/docs/images/indexScraper.drawio.png)
+
+## Main Scraper
+
+It will run only one instance at a time. It is triggered by the `utn-frsn-news-scraper` queue. Extracts the whole news information (title, content, image, date) and metadata (responseElapsedTime, parseElapsedTime).
+
+After extraction, it inserts a task in the `utn-frsn-news-messenger` queue.
+
+![Diagram of Main Scraper](/docs/images/mainScraper.drawio.png)
 
 ## Messenger
 
-Utiliza un sistema de cola de trabajo para mandar los mensajes con las noticias. Corre a cada hora (inicia unos minutos después que el scraper, para que tome las nuevas noticias que este genere). Obtiene las tareas sin procesar, y toma de ellas la URL de la noticia. Con esa URL busca los datos en la DB para mandar el mensaje de la noticia y su respectiva imagen. Por último manda el mensaje contruido a partir de esa información.
+It will run only one instance at a time. It is triggered by the `utn-frsn-news-messenger` queue. Retrieves the news information from D1 and sends the message via Telegram.
 
-## Base de Datos
+![Diagram of Messenger](/docs/images/messenger.drawio.png)
 
-Se utiliza MongoDB (base de datos open source) y como host se utiliza a su propia compañía que da host gratuito bajo unos límites que son sumamente suficientes para la aplicación de este proyecto.
+## DB Structure
 
-En cuanto a la estructura:
+Cloudflare D1 is a SQLite database which is hosted in the robust and everywhere available cloudflare network.
 
-- se utiliza una única base de datos llamada `news_db`
-- dentro de esa DB, hay 2 colecciones:
-  - `messagerQueue` (**TODO**: arreglar este nombre)
-  - `news`
+We use only one table to store all information related to each news, called simply `news`.
 
-`messagerQueue` tiene la cola de trabajo (aunque se podría usar Redis para ser más eficiente, pero para nuestra aplicación es más que suficiente, de todas formas no se descarta que en el futuro se pueda aplicar Redis para aprender cómo usarlo). La estructura de los datos es:
+The records structure is the following:
 
-- `_id` ObjectId de MongoDB
-- `url` de la noticia
-- `insertedDate` fecha de inserción
-- `lastUpdateDate` última actualización
-- `status` estado de procesamiento
-  - `0`: sin procesar
-  - `1`: procesado exitosamente
-  - `-1`: error
+Field | Type | Description
+--- | --- | ---
+id | INTEGER | Unique identifier of each news
+url | VARCHAR(511) | Unique URL identifying this news
+title | VARCHAR(127) | Title of the news
+body | TEXT | News content
+photo | VARCHAR(63) | Image location
+photo_url | VARCHAR(127) | Image public URL (to send via Telegram instead of the content)
+index_at | TEXT | Moment when the [Index Scraper](#index-scraper) detected this news
+inserted_at | TEXT | Moment when the [Main Scraper](#main-scraper) inserted this news
+response_elapsed_time | REAL | Seconds taken by the faculty server to complete the HTTP request
+parse_elapsed_time | REAL | Seconds taken to parse the HTML
 
-`news` contiene todo el texto de la noticia, la url de la foto y además mediciones de tiempo para el parseado y la espera de la respuesta del sitio web. La estructura de los datos es la siguiente:
+## Queues Structure
 
-- `_id` ObjectId de MongoDB
-- `insertedDatetime` fecha de inserción
-- `url` de la noticia
-- `title` título de la noticia
-- `body` cuerpo de la noticia
-- `urlPhoto` url para la foto de la noticia
-- `responseElapsedTime` tiempo de respuesta de la petición http al servidor web de la facultad
-- `parseElapsedTime` tiempo empleado en el parseado de la información en el html de la página
+### utn-frsn-news-scraper
 
-## Infraestructura
+Scraper queue.
 
-- Base de datos: MongoDB
-  - Host: https://www.mongodb.com/
-- Hosting: Google Cloud Platform (GCP)
-  - Servicios usados: Cloud Functions, Cloud Scheduler, Cloud Build, Pub/Sub
-  - Quota gratuita: https://cloud.google.com/free/docs/free-cloud-features?hl=es#free-tier-usage-limits
+Field | Type | Description
+--- | --- | ---
+news_url | | News URL
+inserted_at | | Insertion date
+updated_at | | Update date
+status | Integer | 0=unprocessed / 1=success / 99=error
 
-Anteriormente esta aplicación se hosteaba en Heroku pero a partir del 28/11/2022 sus planes gratuitos fueron removidos (https://help.heroku.com/RSBRUH58/removal-of-heroku-free-product-plans-faq).
+### utn-frsn-news-messenger
 
-## Variables de entorno
+Messenger queue.
 
-Es importante destacar que el código fuente no contiene las llaves de acceso a la base de datos ni tampoco a la api de Telegram. Es por ello que se debe configurar mediante variables de entorno.
+Field | Type | Description
+--- | --- | ---
+news_id | Integer | News identifier
+inserted_at | | Insertion date
+updated_at | | Update date
+status | Integer | 0=unprocessed / 1=success / 99=error
 
-Dependiendo del entorno, se puede configurar de varias formas. Durante el desarrollo o testeo local de este programa se puede utilizar un archivo `.env` al cual se le pone el siguiente contenido:
+
+## Infrastructure
+
+- Hosting: Cloudflare
+  - Cloudflare D1 (main database): https://developers.cloudflare.com/d1/
+  - Cloudflare Images: https://developers.cloudflare.com/images/
+  - Cloudflare Queues: https://developers.cloudflare.com/queues/
+- Plans: Workers Paid + Starter Images
+
+### Evolution
+
+- Hosting Heroku (Scheduler + Task) + MongoDB Atlas. Old README: https://github.com/gorandp/utn-frsn-news/tree/5f98c06
+  - Previously it was used by its free tier, but since 2022/11/28 its [free plans were removed](https://help.heroku.com/RSBRUH58/removal-of-heroku-free-product-plans-faq)
+  - Nice ecosystem of tools
+- Hosting GCP (Cloud Schedule + Cloud Functions + Cloud Build + Pub/Sub) + MongoDB Atlas. Old README: https://github.com/gorandp/utn-frsn-news/tree/f4b86d3
+  - Nice ecosystem of tools
+  - Free tiers are really generous
+  - Pricey SQL (that's why we kept MongoDB Atlas)
+  - Configurable via handy Shell scripts
+- Hosting Cloudflare (Workers + Queues + D1 + Images): current
+  - Highly available and robust network
+  - Nice and simple ecosystem of tools
+  - Free tiers are really generous
+  - Cheap and reliable SQL
+  - Configurable via JSON inside the project
+  - Promotes usage of `uv` (which is a great python version and packages manager, among other things) for its new Python Workers.
+
+## Environment variables
+
+Private keys like Telegram API Key, are stored as a secret. The approach we do is the following. In development we store the secrets in a `.env` file. For testing we store the secrets in Github actions. For production we store the secrets in the Cloudflare Platform.
 
 ```
 TELEGRAM_API_KEY="..."
-DB_CONNECTION_STRING="..."
-LOGGER_LEVEL=INFO
-TIMEOUT=180
+## Defaults
+# LOGGER_LEVEL=INFO
 ```
 
-Notar que hay 4 variables de entorno.
+Currently, there's only one secret, the `TELEGRAM_API_KEY`. The other is an environment configuration. We want only to log the INFO and above logs in production, but on development we want it to show starting from the DEBUG logs.
 
-- `TELEGRAM_API_KEY` llave de acceso al bot de Telegram
-- `DB_CONNECTION_STRING` string que contiene usuario y contraseña, la cual da el acceso completo a la DB
-- `LOGGER_LEVEL` menor nivel de logs a mostrar
-  - En el ejemplo pongo `INFO` pero pueden ser: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` (o `FATAL`)
-- `TIMEOUT` tiempo de espera de la petición de HTTP (luego de esto, se corta la petición y sigue la ejecución del programa, que puede volver a realizar la petición o marcarla como error)
-
-Para el deploy en GCP, se hace uso de un archivo YAML. Básicamente consiste en copiar el archivo `.env` con el nombre `.env.yaml` y luego cambiar los signos `=` por `: ` (notar el espacio luego del ":"). Por último se le pone comillas al valor de TIMEOUT, es decir que quedaría así `TIMEOUT: "180"`.
-
-## Google Cloud Platform
-
-A fines de acortar este README, no se explica cómo crearse una cuenta en GCP, cómo instalar Google Cloud CLI, ni tampoco se profundiza mucho en los servicios utilizados de GCP. Al final de esta sección hay a disposición unos links con info útil sobre estos temas.
-
-El esquema de cómo funciona la infra es el siguiente:
-- 2 temas Pub/Sub. Uno para el scraper y otro para el messenger
-- 2 functions que se subscriben al tema correspondiente Pub/Sub
-- 2 scheduled jobs que publican un mensaje en el tema Pub/Sub cada 1 hora para activar la function deseada
-
-El deploy de las functions y la creación de los scheduled jobs se hace desde la CLI de gcloud.
-
-### Deploy functions
-
-```bash
-# Template
-gcloud functions deploy [FUNCTION_NAME] --entry-point main --runtime python311 --trigger-resource [TOPIC_NAME] --trigger-event google.pubsub.topic.publish --timeout 540s
-```
-
-```bash
-# Scraper
-gcloud functions deploy scraper_func --entry-point main_scraper --runtime python311 --trigger-resource scraper-pubsub-topic --trigger-event google.pubsub.topic.publish --timeout 540s --env-vars-file .env.yaml
-# Messenger
-gcloud functions deploy messenger_func --entry-point main_messenger --runtime python311 --trigger-resource messenger-pubsub-topic --trigger-event google.pubsub.topic.publish --timeout 540s --env-vars-file .env.yaml
-```
-
-### Schedule jobs
-
-```bash
-# Template
-# gcloud scheduler jobs create pubsub [JOB_NAME] --schedule [SCHEDULE] --topic [TOPIC_NAME] --message-body [MESSAGE_BODY]
-```
-
-```bash
-# Scraper
-gcloud scheduler jobs create pubsub scraper_job --schedule "30 * * * *" --topic scraper-pubsub-topic --message-body "Scraper job once per hour at minute 30."
-# Messenger
-gcloud scheduler jobs create pubsub messenger_job --schedule "55 * * * *" --topic messenger-pubsub-topic --message-body "Messenger job once per hour at minute 55."
-```
-
-### Referencias externas útiles
-
-- GCP: https://cloud.google.com/
-- Instalar Google Cloud CLI: https://cloud.google.com/sdk/docs/install-sdk
-- Schedule a recurring python script: https://cloud.google.com/blog/products/application-development/how-to-schedule-a-recurring-python-script-on-gcp
-- El uso de un archivo externo para las variables de entorno: https://cloud.google.com/functions/docs/configuring/env-var
+<!-- Maybe for production we want WARNING as the default LOGGER_LEVEL -->

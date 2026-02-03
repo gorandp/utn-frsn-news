@@ -1,0 +1,83 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "utn-frsn-news",
+  "main": "src/entry.py",
+  "compatibility_date": "2026-01-28",
+  "compatibility_flags": [
+    "python_workers"
+  ],
+  "observability": {
+    "enabled": false,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false,
+      "persist": true,
+      "head_sampling_rate": 1
+    }
+  },
+
+  "vars": {
+    "TELEGRAM_CHAT_ENV": "dev", // CHANGE TO "prod" FOR PROD ENVIRONMENT
+    "TELEGRAM_API_KEY": "", // SECRET
+    "TELEGRAM_SILENT_MODE": "false",
+    "CLOUDFLARE_ACCOUNT_ID": "", // SECRET
+    "CLOUDFLARE_IMAGES_ACCOUNT_HASH": "", // SECRET
+    "CLOUDFLARE_IMAGES_API_TOKEN": "", // SECRET
+    "LOGGER_LEVEL": "INFO",
+    "TIMEOUT": "180"
+  },
+
+  "d1_databases": [
+    {
+    "binding": "DB",
+    "database_name": "utn_frsn_news_db",
+    "database_id": "55a5399c-7371-4923-8481-0cf209e09a0e"
+    }
+  ],
+
+  "triggers": {
+    // Schedule cron triggers:
+    // - At every 3rd minute
+    // - At 15:00 (UTC) on first day of the month
+    // - At 23:59 (UTC) on the last weekday of the month
+    // - At every hour
+    "crons": [
+      "0 * * * *"
+    ]
+  },
+
+  "queues": {
+    "producers": [
+      {
+        "binding": "SCRAPER_QUEUE",
+        "queue": "utn-frsn-news-scraper"
+      },
+      {
+        "binding": "MESSENGER_QUEUE",
+        "queue": "utn-frsn-news-messenger"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "utn-frsn-news-scraper",
+        "max_batch_size": 50,
+        "dead_letter_queue": "utn-frsn-news-dlq-scraper"
+      },
+      {
+        "queue": "utn-frsn-news-messenger",
+        "max_batch_size": 50,
+        "dead_letter_queue": "utn-frsn-news-dlq-messenger"
+      }
+    ]
+  }
+}
