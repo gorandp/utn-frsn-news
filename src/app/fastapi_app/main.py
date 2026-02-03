@@ -1,7 +1,9 @@
 from fastapi import FastAPI, Request, HTTPException, status, Depends
+from fastapi.templating import Jinja2Templates
 from typing import Annotated
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+import os
 
 # from database_models import Base as DbBase
 from .. import database_models as models
@@ -12,13 +14,32 @@ from .database import get_db
 
 app = FastAPI()
 
+templates = Jinja2Templates(
+    directory=os.path.join(os.path.dirname(__file__), "templates")
+)
 
 logger = LogWrapper().logger
 
 
-@app.get("/")
-async def root(req: Request, db: Annotated[Session, Depends(get_db)]):
-    return {"message": "Welcome to the FastAPI application!"}
+@app.get("/", include_in_schema=False)
+async def root(req: Request):
+    return templates.TemplateResponse(
+        req,
+        "home.html",
+        {
+            "news_list": [
+                {"title": "Sample News", "content": "This is a sample news content."},
+                {"title": "Another News", "content": "This is another news content."},
+            ]
+        },
+    )  # , {"news": news})
+
+
+@app.get("/news/{news_id}")
+async def get_news_item(
+    news_id: int, req: Request, db: Annotated[Session, Depends(get_db)]
+):
+    pass
 
 
 @app.get("/api/news", response_model=list[NewsResponse])

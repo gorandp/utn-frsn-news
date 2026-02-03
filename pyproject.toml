@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "beautifulsoup4>=4.14.3",
     "fastapi>=0.128.0",
+    "jinja2>=3.1.6",
     "sqlalchemy>=2.0.46",
     "sqlalchemy-cloudflare-d1>=0.3.5",
     "webtypy>=0.1.7",
