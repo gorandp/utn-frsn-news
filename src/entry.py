@@ -137,6 +137,7 @@ class Default(WorkerEntrypoint):
     # Scheduled Worker
     # Index Scraper
     async def scheduled(self, controller, env, ctx):
+        self.logger.info("Starting scheduled task")
         with self.SessionLocal() as session:
             news_urls = await index_scraper(session)
             if news_urls:
@@ -145,6 +146,7 @@ class Default(WorkerEntrypoint):
                     # Max 100 messages per batch
                     batch = tasks[i : i + 100]
                     await self.env.SCRAPER_QUEUE.sendBatch(to_js(batch))
+        self.logger.info("Scheduled task completed successfully")
 
     # Queue Worker
     # Main Scraper and Messenger Worker
@@ -206,6 +208,7 @@ class Default(WorkerEntrypoint):
             else:
                 self.logger.error(f"Unknown queue: {batch.queue}")
                 return
+        self.logger.info(f"Finished batch queue {batch.queue} successfully")
 
     # async def fetch(self, request: Request):
     #     with self.SessionLocal() as session:
