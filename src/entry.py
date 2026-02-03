@@ -1,24 +1,29 @@
 from datetime import datetime, UTC
-from workers import WorkerEntrypoint  # , Response, Request
+from workers import WorkerEntrypoint, Request
 from pyodide.ffi import to_js
 from sqlalchemy_cloudflare_d1 import create_engine_from_binding  # type: ignore
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import select
+from contextvars import ContextVar
 
 import app.constants as cts
 from app.logger import LogWrapper, LoggerConfig
 from app.database_models import News, Base as DatabaseBaseModel
 from app.cloudflare_images import CloudflareImages, CloudflareConfig
 from app.cloudflare_queues import QueueScraper, QueueMessenger
-from app.scraper.feed import HistoricFeed
-from app.scraper.news import NewsReader
-from app.messenger.telegram import Telegram
-from app.messenger.message_formatter import build_message, build_message_header
+from app.main_apps.scraper.feed import HistoricFeed
+from app.main_apps.scraper.news import NewsReader
+from app.main_apps.messenger.telegram import Telegram
+from app.main_apps.messenger.message_formatter import (
+    build_message,
+    build_message_header,
+)
+
+from app.fastapi_app.main import app as fastapi_app
 
 
-# from contextvars import ContextVar
-# # ContextVar to handle session context safely
-# db_session: ContextVar[Session] = ContextVar("db_session")
+# ContextVar to handle session context safely
+db_session: ContextVar[Session] = ContextVar("db_session")
 
 
 async def index_scraper(session: Session):
@@ -210,16 +215,16 @@ class Default(WorkerEntrypoint):
                 return
         self.logger.info(f"Finished batch queue {batch.queue} successfully")
 
-    # async def fetch(self, request: Request):
-    #     with self.SessionLocal() as session:
-    #         if request.url.endswith("/start/testSomething"):
-    #             pass
+    async def fetch(self, request: Request):
+        import asgi  # type: ignore
 
-    #         ## ------> UNKNOWN (must never happen) <------ ##
-    #         else:
-    #             return Response("Not Found", status=404)
-
-    #     ## Success ;)
-    #     # self.logger.info("Finished successfully")
-    #     # self.logger.error("Finished with errors")
-    #     return Response("Success", status=200)
+        with self.SessionLocal() as session:
+            token = db_session.set(session)  # Store session for THIS request only
+            try:
+                return await asgi.fetch(  # type: ignore
+                    fastapi_app,
+                    request.js_object,
+                    self.env,  # type: ignore
+                )
+            finally:
+                db_session.reset(token)  # Clean up session after request

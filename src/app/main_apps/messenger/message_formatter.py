@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from ..database_models import News
+from ...database_models import News
 
 
 def get_date_msg(news: News) -> str:
