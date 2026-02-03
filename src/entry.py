@@ -2,9 +2,7 @@ from datetime import datetime, UTC
 from workers import WorkerEntrypoint, Request
 from pyodide.ffi import to_js
 from sqlalchemy_cloudflare_d1 import create_engine_from_binding  # type: ignore
-from sqlalchemy.orm import sessionmaker, Session
-
-from contextvars import ContextVar
+from sqlalchemy.orm import sessionmaker
 
 import app.constants as cts
 from app.logger import LogWrapper, LoggerConfig
@@ -16,10 +14,7 @@ from app.main_apps.messenger.telegram import Telegram
 from app.main_apps.main import index_scraper, main_scraper, messenger
 
 from app.fastapi_app.main import app as fastapi_app
-
-
-# ContextVar to handle session context safely
-db_session: ContextVar[Session] = ContextVar("db_session")
+from app.fastapi_app.database import db_session
 
 
 class EntryLogger(LogWrapper):
@@ -124,15 +119,15 @@ class Default(WorkerEntrypoint):
         self.logger.info(f"Finished batch queue {batch.queue} successfully")
 
     async def fetch(self, request: Request):
-        import asgi  # type: ignore
+        import asgi
 
         with self.SessionLocal() as session:
             token = db_session.set(session)  # Store session for THIS request only
             try:
-                return await asgi.fetch(  # type: ignore
+                return await asgi.fetch(
                     fastapi_app,
                     request.js_object,
-                    self.env,  # type: ignore
+                    self.env,
                 )
             finally:
                 db_session.reset(token)  # Clean up session after request
