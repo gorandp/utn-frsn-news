@@ -26,7 +26,7 @@ async def index(
     req: Request,
     db: Annotated[Session, Depends(get_db)],
 ):
-    news = (
+    news_list = (
         db.execute(
             select(models.News).order_by(models.News.origin_created_at.desc()).limit(10)
         )
@@ -36,19 +36,33 @@ async def index(
     return templates.TemplateResponse(
         req,
         "home.html",
-        {"news_list": news},
-    )  # , {"news": news})
+        {"news_list": news_list},
+    )
 
 
-@app.get("/news/{news_id}")
+@app.get("/news/{news_id}", include_in_schema=False)
 async def get_news_item(
-    news_id: int, req: Request, db: Annotated[Session, Depends(get_db)]
+    news_id: int,
+    req: Request,
+    db: Annotated[Session, Depends(get_db)],
 ):
-    pass
+    news = (
+        db.execute(select(models.News).where(models.News.id == news_id))
+        .scalars()
+        .first()
+    )
+    return templates.TemplateResponse(
+        req,
+        "news_detail.html",
+        {"news": news},
+    )
 
 
 @app.get("/api/news", response_model=list[NewsResponse])
-async def get_news(req: Request, db: Annotated[Session, Depends(get_db)]):
+async def get_news(
+    req: Request,
+    db: Annotated[Session, Depends(get_db)],
+):
     logger.info("Fetching news items from the database")
     try:
         result = db.execute(select(models.News).limit(10))

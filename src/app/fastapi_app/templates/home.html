@@ -6,7 +6,7 @@
   flex gap-2 flex-col sm:flex-row
   justify-between items-center"
 >
-  <h1>Listado de noticias</h1>
+  <h1>Últimas noticias</h1>
 
   <div>
     <a href="#"
@@ -23,7 +23,12 @@
 </div>
 
 {% for news in news_list %}
-<div class="flex flex-row gap-2 max-w-3xl mx-auto py-4 px-4 border-b border-slate-600 last:border-0 hover:bg-slate-800 transition-colors duration-200"
+<div class="flex flex-row gap-2
+    max-w-3xl mx-auto py-4 px-4
+    border-2 border-t-transparent border-x-transparent border-b-slate-600
+    last:border-0
+    hover:bg-slate-800 hover:border-sky-200
+    "
   onclick="window.location.href='/news/{{ news.id }}';"
   style="cursor: pointer;"
 >
@@ -62,4 +67,5 @@
     Cargar Más
   </a>
 </div>
+
 {% endblock content %}

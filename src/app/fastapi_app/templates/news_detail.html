@@ -1,0 +1,59 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="max-w-3xl mx-auto mb-5 py-8 px-4
+  text-3xl font-bold
+  flex gap-5 flex-col sm:flex-row
+  justify-start items-center"
+>
+  <div>
+    <a href="/"
+      class="bg-sky-700 hover:bg-sky-900
+        border-2 border-transparent hover:border-sky-200
+        text-white
+        p-2 rounded-lg
+        flex items-center
+        shadow-md hover:shadow-lg max-w-fit"
+    >
+    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+    </a>
+  </div>
+  <h1>Detalle de la noticia</h1>
+</div>
+
+<div class="max-w-3xl mx-auto mb-10 py-6 px-4
+  bg-slate-800/50 rounded-lg shadow-md"
+>
+  <div class="flex justify-between mb-4">
+    <h1 class="text-2xl font-bold">{{ news.title }}</h1>
+    <div>
+      <a href="{{ news.url }}"
+        target="_blank"
+        class="text-sky-400 hover:text-sky-600 underline break-all"
+      >
+        <i data-lucide="external-link"></i>
+      </a>
+    </div>
+  </div>
+  <h2 class="text-sm text-slate-400 mb-4">Fecha en origen {{ news.origin_created_at.strftime("%d/%m/%Y %H:%M") }}</h2>
+  <div class="flex gap-2">
+    <h2 class="text-sm text-slate-200 mb-4 bg-gray-900 p-2 text-center rounded-lg">
+      <b>Indexado</b> {{ news.indexed_at.strftime("%d/%m/%Y %H:%M") }}
+    </h2>
+    <h2 class="text-sm text-slate-200 mb-4 bg-gray-900 p-2 text-center rounded-lg">
+      <b>Insertado</b> {{ news.inserted_at.strftime("%d/%m/%Y %H:%M") }}
+    </h2>
+    <h2 class="text-sm text-slate-200 mb-4 bg-gray-900 p-2 text-center rounded-lg">
+      <b>Tiempo de resp. en seg.</b> {{ news.response_elapsed_seconds }}
+    </h2>
+    <h2 class="text-sm text-slate-200 mb-4 bg-gray-900 p-2 text-center rounded-lg">
+      <b>Tiempo de parseo en seg.</b> {{ news.parse_elapsed_seconds }}
+    </h2>
+  </div>
+  <div class="mb-4">
+    <img src="https://imagedelivery.net/-/{{ news.photo_id }}/public" alt="News Image" class="w-full h-auto rounded-lg shadow-md">
+  </div>
+  <p class="space-y-4 whitespace-pre-wrap overflow-auto">{{ news.content }}</p>
+</div>
+
+{% endblock content %}
