@@ -22,16 +22,21 @@ logger = LogWrapper().logger
 
 
 @app.get("/", include_in_schema=False)
-async def root(req: Request):
+async def index(
+    req: Request,
+    db: Annotated[Session, Depends(get_db)],
+):
+    news = (
+        db.execute(
+            select(models.News).order_by(models.News.origin_created_at.desc()).limit(10)
+        )
+        .scalars()
+        .all()
+    )
     return templates.TemplateResponse(
         req,
         "home.html",
-        {
-            "news_list": [
-                {"title": "Sample News", "content": "This is a sample news content."},
-                {"title": "Another News", "content": "This is another news content."},
-            ]
-        },
+        {"news_list": news},
     )  # , {"news": news})
 
 

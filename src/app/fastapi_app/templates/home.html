@@ -1,9 +1,65 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h1>Home page</h1>
+<div class="max-w-3xl mx-auto mb-5 py-8 px-4
+  text-3xl font-bold
+  flex gap-2 flex-col sm:flex-row
+  justify-between items-center"
+>
+  <h1>Listado de noticias</h1>
+
+  <div>
+    <a href="#"
+      class="bg-sky-700 hover:bg-sky-900
+        border-2 border-transparent hover:border-sky-200
+        text-white
+        p-2 rounded-lg
+        flex items-center gap-2 transition-all duration-200
+        shadow-md hover:shadow-lg max-w-fit"
+    >
+      <i data-lucide="search" class="w-4 h-4"></i>
+    </a>
+  </div>
+</div>
+
 {% for news in news_list %}
-<p>{{ news.title }} - {{ news.content }}</p>
+<div class="flex flex-row gap-2 max-w-3xl mx-auto py-4 px-4 border-b border-slate-600 last:border-0 hover:bg-slate-800 transition-colors duration-200"
+  onclick="window.location.href='/news/{{ news.id }}';"
+  style="cursor: pointer;"
+>
+  <div class="w-50 my-auto flex-shrink-0">
+    <img src="https://imagedelivery.net/-/{{ news.photo_id }}/public" alt="News Image" class="w-full h-auto mb-4 rounded-lg shadow-md">
+  </div>
+  <div>
+    <h1 class="space-y-2 text-xl font-semibold">{{ news.title }}</h1>
+    <h2 class="text-sm text-slate-400 mb-2">{{ news.origin_created_at.strftime("%d/%m/%Y %H:%M") }}</h2>
+    <p class="space-y-2">{{ news.content[:100] + "..." }}</p>
+  </div>
+</div>
 {% endfor %}
 
+<div class="mt-5 mb-15 max-w-3xl mx-auto flex justify-center gap-4">
+  <a href="#"
+    class="bg-sky-700 hover:bg-sky-900
+      border-2 border-transparent hover:border-sky-200
+      text-white
+      px-5 py-1 rounded-lg
+      flex items-center gap-2 transition-all duration-200
+      shadow-md hover:shadow-lg"
+  >
+    <i data-lucide="search" class="w-4 h-4"></i>
+    Búsqueda Avanzada
+  </a>
+  <a href="#"
+    class="bg-sky-700 hover:bg-sky-900
+      border-2 border-transparent hover:border-sky-200
+      text-white
+      px-5 py-1 rounded-lg
+      flex items-center gap-2 transition-all duration-200
+      shadow-md hover:shadow-lg"
+  >
+    <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+    Cargar Más
+  </a>
+</div>
 {% endblock content %}
