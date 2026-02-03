@@ -79,5 +79,11 @@
         "dead_letter_queue": "utn-frsn-news-dlq-messenger"
       }
     ]
+  },
+
+  "assets": {
+    "directory": "./src/app/fastapi_app/dist",
+    "binding": "ASSETS",
+    "run_worker_first": true,
   }
 }

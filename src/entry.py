@@ -3,6 +3,7 @@ from workers import WorkerEntrypoint, Request
 from pyodide.ffi import to_js
 from sqlalchemy_cloudflare_d1 import create_engine_from_binding  # type: ignore
 from sqlalchemy.orm import sessionmaker
+from urllib.parse import urlparse
 
 import app.constants as cts
 from app.logger import LogWrapper, LoggerConfig
@@ -119,6 +120,10 @@ class Default(WorkerEntrypoint):
         self.logger.info(f"Finished batch queue {batch.queue} successfully")
 
     async def fetch(self, request: Request):
+        url = urlparse(request.url)
+        if url.path.startswith("/static"):
+            return await self.env.ASSETS.fetch(request)
+
         import asgi
 
         with self.SessionLocal() as session:
