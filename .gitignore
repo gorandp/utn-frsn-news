@@ -68,3 +68,7 @@ python_modules/
 .venv-workers/
 
 .python-version
+__pycache__/
+migration_ignore/
+cloudflare_images/
+
