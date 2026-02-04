@@ -31,14 +31,21 @@
   <link rel="manifest" href="/static/site.webmanifest">
 </head>
 <body class="flex flex-col min-h-screen">
-  <nav class="bg-gradient-to-r from-slate-900 to-black text-white border-b-4 border-sky-500 shadow-lg py-3 px-7 flex flex-row items-center justify-between">
-    <div class="flex flex-row items-center gap-10">
+  <nav class="bg-gradient-to-r from-slate-900 to-black
+      text-white
+      border-b-4 border-sky-500
+      shadow-lg
+      py-3 px-7
+      flex flex-col sm:flex-row items-center
+      gap-4 sm:gap-0
+      justify-center sm:justify-between">
+    <div class="flex flex-row items-center gap-4 sm:gap-8">
       <div class="bg-white/10 rounded-lg p-1 overflow-hidden shadow-md">
         <img src="/static/icons/logo.jpg" width="50" height="50" alt="Logo">
       </div>
       <div class="flex items-center gap-2">
         <i data-lucide="newspaper" class="w-6 h-6 text-sky-400"></i>
-        <a href="{{ url_for('index') }}" class="text-xl font-bold hover:text-sky-300 transition-colors duration-200">UTN FRSN Noticias</a>
+        <a href="{{ url_for('index') }}" class="text-xl font-bold hover:text-sky-300">UTN FRSN Noticias</a>
       </div>
     </div>
     <div class="flex items-center gap-2">
@@ -47,7 +54,7 @@
           border-2 border-transparent hover:border-sky-200
           text-white
           p-2 md:px-5 md:py-1 rounded-lg
-          flex items-center gap-2 transition-all duration-200
+          flex items-center gap-2
           shadow-md hover:shadow-lg"
         target="_blank"
         >
@@ -59,18 +66,38 @@
           border-2 border-transparent hover:border-sky-200
           text-white
           p-2 rounded-lg
-          flex items-center gap-2 transition-all duration-200
+          flex items-center gap-2
           shadow-md hover:shadow-lg"
         target="_blank"
         >
         <i data-lucide="github" class="w-4 h-4"></i>
+      </a>
+      <a href="/"
+        class="bg-sky-700 hover:bg-sky-900
+          border-2 border-transparent hover:border-sky-200
+          text-white
+          p-2 rounded-lg
+          flex items-center gap-2
+          shadow-md hover:shadow-lg"
+        >
+        <i data-lucide="house" class="w-4 h-4"></i>
+      </a>
+      <a href="/about"
+        class="bg-sky-700 hover:bg-sky-900
+          border-2 border-transparent hover:border-sky-200
+          text-white
+          p-2 rounded-lg
+          flex items-center gap-2
+          shadow-md hover:shadow-lg"
+        >
+        <i data-lucide="circle-question-mark" class="w-4 h-4"></i>
       </a>
       <a href="/login"
         class="bg-sky-700 hover:bg-sky-900
           border-2 border-transparent hover:border-sky-200
           text-white
           p-2 rounded-lg
-          flex items-center gap-2 transition-all duration-200
+          flex items-center gap-2
           shadow-md hover:shadow-lg"
         >
         <i data-lucide="log-in" class="w-4 h-4"></i>
@@ -94,7 +121,7 @@
           class="text-center text-white
             bg-sky-600/70 px-4 py-2 rounded-lg
             border-2 border-transparent
-            hover:bg-sky-800 hover:border-sky-200 transition-colors duration-200
+            hover:bg-sky-800 hover:border-sky-200
             flex items-center gap-2"
         >
           <i data-lucide="github" class="w-4 h-4"></i>

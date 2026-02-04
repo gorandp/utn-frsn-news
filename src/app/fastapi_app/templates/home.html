@@ -37,7 +37,9 @@
   </div>
   <div>
     <h1 class="space-y-2 text-xl font-semibold">{{ news.title }}</h1>
+    {% if news.origin_created_at %}
     <h2 class="text-sm text-slate-400 mb-2">{{ news.origin_created_at.strftime("%d/%m/%Y %H:%M") }}</h2>
+    {% endif %}
     <p class="space-y-2">{{ news.content[:100] + "..." }}</p>
   </div>
 </div>
