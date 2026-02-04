@@ -14,6 +14,7 @@ class NewsCreate(NewsBase):
 
 
 class NewsShortResponse(NewsBase):
+    # Enables ORM mode (read from SQLAlchemy models attributes)
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -21,6 +22,7 @@ class NewsShortResponse(NewsBase):
 
 
 class NewsResponse(NewsBase):
+    # Enables ORM mode (read from SQLAlchemy models attributes)
     model_config = ConfigDict(from_attributes=True)
 
     id: int
