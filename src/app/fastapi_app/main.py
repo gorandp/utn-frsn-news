@@ -77,7 +77,7 @@ async def get_news_item(
     )
 
 
-@app.get("/api/news", response_model=list[NewsResponse])
+@app.get("/api/news", response_model=list[NewsShortResponse])
 async def get_news(
     req: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -86,7 +86,52 @@ async def get_news(
     try:
         result = db.execute(select(models.News).limit(10))
         news_items = result.scalars().all()
-        return [item.__dict__ for item in news_items]
+        return [
+            {
+                **item.__dict__,
+                "content": item.content[:150].replace("\n", "")[:100] + "...",
+                "photo_url": CloudflareImages.get_public_url(item.photo_id[:36])
+                if item.photo_id is not None
+                else None,
+            }
+            for item in news_items
+        ]
+    except Exception as e:
+        logger.error(f"Error fetching news: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@app.get("/api/news/{news_id}", response_model=NewsResponse)
+async def get_news_item_api(
+    news_id: int,
+    req: Request,
+    db: Annotated[Session, Depends(get_db)],
+):
+    # logger.info(f"Fetching news item with ID {news_id} from the database")
+    try:
+        result = db.execute(select(models.News).where(models.News.id == news_id))
+        news_item = result.scalars().first()
+        if not news_item:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"News item with ID {news_id} not found",
+            )
+        return {
+            **news_item.__dict__,
+            "photo_url": CloudflareImages.get_public_url(news_item.photo_id)
+            if news_item.photo_id is not None
+            else None,
+            "response_elapsed_seconds": round(news_item.response_elapsed_seconds, 2)
+            if news_item.response_elapsed_seconds is not None
+            else None,
+            "parse_elapsed_seconds": round(news_item.parse_elapsed_seconds, 2)
+            if news_item.parse_elapsed_seconds is not None
+            else None,
+        }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.info(f"Error fetching news item: {e}")
         raise HTTPException(
