@@ -48,15 +48,15 @@
       <b>Insertado</b> {{ news.inserted_at.strftime("%d/%m/%Y %H:%M") }}
     </h2>
     <h2 class="text-sm text-slate-200 mb-4 bg-gray-900 p-2 text-center rounded-lg">
-      <b>Tiempo de resp. en seg.</b> {{ news.response_elapsed_seconds }}
+      <b>Tiempo de resp. en seg.</b> {{ "%.2f"|format(news.response_elapsed_seconds) }}
     </h2>
     <h2 class="text-sm text-slate-200 mb-4 bg-gray-900 p-2 text-center rounded-lg">
-      <b>Tiempo de parseo en seg.</b> {{ news.parse_elapsed_seconds }}
+      <b>Tiempo de parseo en seg.</b> {{ "%.2f"|format(news.parse_elapsed_seconds) }}
     </h2>
   </div>
   {% if news.photo_id %}
   <div class="mb-4">
-    <img src="https://imagedelivery.net/-/{{ news.photo_id }}/public" alt="News Image" class="w-full h-auto rounded-lg shadow-md">
+    <img src="{{ news.photo_url }}" alt="News Image" class="w-full h-auto rounded-lg shadow-md">
   </div>
   {% endif %}
   <p class="space-y-4 whitespace-pre-wrap overflow-auto">{{ news.content }}</p>

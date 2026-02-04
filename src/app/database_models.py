@@ -7,6 +7,8 @@ from sqlalchemy import Integer, Float, String, Text
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 
+from .cloudflare_images import CloudflareImages
+
 
 class DateTimeString(TypeDecorator[datetime]):
     impl = String
@@ -55,3 +57,9 @@ class News(Base):
         DateTimeString,
         default=lambda: datetime.now(UTC),
     )
+
+    @property
+    def photo_url(self) -> str | None:
+        if self.photo_id is None:
+            return None
+        return CloudflareImages.get_public_url(self.photo_id)

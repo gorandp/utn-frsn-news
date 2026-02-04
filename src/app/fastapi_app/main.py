@@ -35,7 +35,8 @@ async def about(
     )
 
 
-@app.get("/", include_in_schema=False)
+@app.get("/", include_in_schema=False, name="index")
+@app.get("/news", include_in_schema=False, name="news_index")
 async def index(
     req: Request,
     db: Annotated[Session, Depends(get_db)],
@@ -90,9 +91,6 @@ async def get_news(
             {
                 **item.__dict__,
                 "content": item.content[:150].replace("\n", "")[:100] + "...",
-                "photo_url": CloudflareImages.get_public_url(item.photo_id[:36])
-                if item.photo_id is not None
-                else None,
             }
             for item in news_items
         ]
@@ -118,18 +116,7 @@ async def get_news_item_api(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"News item with ID {news_id} not found",
             )
-        return {
-            **news_item.__dict__,
-            "photo_url": CloudflareImages.get_public_url(news_item.photo_id)
-            if news_item.photo_id is not None
-            else None,
-            "response_elapsed_seconds": round(news_item.response_elapsed_seconds, 2)
-            if news_item.response_elapsed_seconds is not None
-            else None,
-            "parse_elapsed_seconds": round(news_item.parse_elapsed_seconds, 2)
-            if news_item.parse_elapsed_seconds is not None
-            else None,
-        }
+        return news_item
     except HTTPException:
         raise
     except Exception as e:
