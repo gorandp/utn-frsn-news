@@ -1,14 +1,18 @@
+import os
+from typing import Annotated
 from fastapi import FastAPI, Request, HTTPException, status, Depends
 from fastapi.templating import Jinja2Templates
-from typing import Annotated
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-import os
 
 # from database_models import Base as DbBase
 from .. import database_models as models
 from ..logger import LogWrapper
-from .schemas import NewsResponse
+from ..cloudflare_images import CloudflareImages
+from .schemas import NewsResponse, NewsShortResponse
 from .database import get_db
 
 
@@ -61,6 +65,11 @@ async def get_news_item(
         .scalars()
         .first()
     )
+    if not news:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"News item with ID {news_id} not found",
+        )
     return templates.TemplateResponse(
         req,
         "news_detail.html",
@@ -79,7 +88,56 @@ async def get_news(
         news_items = result.scalars().all()
         return [item.__dict__ for item in news_items]
     except Exception as e:
-        logger.info(f"Error fetching news: {e}")
+        logger.info(f"Error fetching news item: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    message = exc.detail or "An error ocurred. Please check your request and try again."
+    logger.info(f"pre-Rendering error page for HTTP {exc.status_code}: {message}")
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": message},
+        )
+    if exc.status_code == 404:
+        return templates.TemplateResponse(
+            request,
+            "404.html",
+            {
+                "detail": exc.detail,
+            },
+            status_code=exc.status_code,
+        )
+    logger.info(f"Rendering error page for HTTP {exc.status_code}: {message}")
+    return templates.TemplateResponse(
+        request,
+        "error.html",
+        {
+            "status_code": exc.status_code,
+            "detail": message,
+        },
+        status_code=exc.status_code,
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    message = "Invalid request. Please check your input and try again."
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            content={"detail": message, "errors": exc.errors()},
+        )
+    return templates.TemplateResponse(
+        request,
+        "error.html",
+        {
+            "status_code": status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "detail": message,
+        },
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+    )

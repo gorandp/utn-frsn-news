@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="flex flex-col items-center mx-auto my-16 text-center min-h-[40vh] max-w-md">
+  <p class="text-xs text-white mb-2">
+    HTTP {{ status_code }}
+  </p>
+  <div class="flex gap-3 mb-4 items-center justify-center">
+    <i data-lucide="alert-triangle" class="w-16 h-16 text-sky-400"></i>
+    <h1 class="text-3xl font-bold text-white">¡Oops! Algo salió mal</h1>
+  </div>
+  <p class="text-gray-300 mb-6">
+    Parece que hubo un problema al cargar la página.
+  </p>
+  <p class="text-gray-100 mb-6 p-2 bg-white/10 rounded-lg border border-white/20">
+    {{ detail }}
+  </p>
+  <div class="flex gap-2">
+    <a href="#"
+      onclick="window.history.back(); return false;"
+      class="bg-sky-700 hover:bg-sky-900
+        border-2 border-transparent hover:border-sky-200
+        text-white
+        p-2 rounded-lg
+        flex items-center
+        shadow-md hover:shadow-lg max-w-fit"
+    >
+      <i data-lucide="arrow-left" class="w-4 h-4"></i>
+      Volver atrás
+    </a>
+    <a href="{{ url_for('index') }}" 
+        class="inline-flex
+          bg-sky-700 hover:bg-sky-900
+          border-2 border-transparent hover:border-sky-200
+          text-white
+          p-2 rounded-lg
+          flex items-center gap-2
+          shadow-md hover:shadow-lg">
+      <i data-lucide="home" class="w-5 h-5"></i>
+      Volver al inicio
+    </a>
+  </div>
+</div>
+
+{% endblock content %}
