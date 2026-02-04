@@ -21,6 +21,16 @@ templates = Jinja2Templates(
 logger = LogWrapper().logger
 
 
+@app.get("/about", include_in_schema=False)
+async def about(
+    req: Request,
+):
+    return templates.TemplateResponse(
+        req,
+        "about.html",
+    )
+
+
 @app.get("/", include_in_schema=False)
 async def index(
     req: Request,
