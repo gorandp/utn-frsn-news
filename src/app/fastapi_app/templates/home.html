@@ -23,13 +23,13 @@
 </div>
 
 {% for news in news_list %}
-<div class="flex flex-row gap-2
+<a class="flex flex-row gap-2
     max-w-3xl mx-auto py-4 px-4
     border-2 border-t-transparent border-x-transparent border-b-slate-600
     last:border-0
     hover:bg-slate-800 hover:border-sky-200
     "
-  onclick="window.location.href='/news/{{ news.id }}';"
+  href="{{ url_for('get_news_item', news_id=news.id) }}"
   style="cursor: pointer;"
 >
   <div class="w-50 my-auto flex-shrink-0">
@@ -42,7 +42,7 @@
     {% endif %}
     <p class="space-y-2">{{ news.content[:100] + "..." }}</p>
   </div>
-</div>
+</a>
 {% endfor %}
 
 <div class="mt-5 mb-15 max-w-3xl mx-auto flex justify-center gap-4">
