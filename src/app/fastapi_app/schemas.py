@@ -6,7 +6,7 @@ class NewsBase(BaseModel):
     url: str = Field(min_length=1, max_length=511)
     title: str = Field(min_length=1, max_length=127)
     content: str = Field(min_length=1)
-    photo_url: str | None = Field(default=None, max_length=127)
+    photo_url: str | None = Field(default=None, max_length=150)
 
 
 class NewsCreate(NewsBase):
