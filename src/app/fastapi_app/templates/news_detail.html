@@ -54,7 +54,7 @@
       <b>Tiempo de parseo en seg.</b> {{ "%.2f"|format(news.parse_elapsed_seconds) }}
     </h2>
   </div>
-  {% if news.photo_id %}
+  {% if news.photo_url %}
   <div class="mb-4">
     <img src="{{ news.photo_url }}" alt="News Image" class="w-full h-auto rounded-lg shadow-md">
   </div>
