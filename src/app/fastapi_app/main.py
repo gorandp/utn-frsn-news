@@ -7,12 +7,12 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import select
+from datetime import datetime, timedelta
 
 # from database_models import Base as DbBase
 from .. import database_models as models
 from ..logger import LogWrapper
-from ..cloudflare_images import CloudflareImages
-from .schemas import NewsResponse, NewsShortResponse
+from .schemas import NewsResponse, NewsShortResponse, NewsSearchResponse
 from .database import get_db
 
 
@@ -37,22 +37,8 @@ async def about(
 
 @app.get("/", include_in_schema=False, name="index")
 @app.get("/news", include_in_schema=False, name="news_index")
-async def index(
-    req: Request,
-    db: Annotated[Session, Depends(get_db)],
-):
-    news_list = (
-        db.execute(
-            select(models.News).order_by(models.News.origin_created_at.desc()).limit(10)
-        )
-        .scalars()
-        .all()
-    )
-    return templates.TemplateResponse(
-        req,
-        "home.html",
-        {"news_list": news_list},
-    )
+async def index(req: Request):
+    return templates.TemplateResponse(req, "home.html")
 
 
 @app.get("/news/{news_id}", include_in_schema=False)
@@ -78,27 +64,40 @@ async def get_news_item(
     )
 
 
-@app.get("/api/news", response_model=list[NewsShortResponse])
-async def get_news(
+@app.get("/search", include_in_schema=False)
+async def search(
     req: Request,
     db: Annotated[Session, Depends(get_db)],
 ):
+    logger.info(f"query: {req.url.query}")
+    return templates.TemplateResponse(req, "search.html")
+
+
+@app.get("/api/news/latest", response_model=list[NewsShortResponse])
+async def get_news(
+    req: Request,
+    db: Annotated[Session, Depends(get_db)],
+    page: int = 1,
+):
     logger.info("Fetching news items from the database")
-    try:
-        result = db.execute(select(models.News).limit(10))
-        news_items = result.scalars().all()
-        return [
-            {
-                **item.__dict__,
-                "content": item.content[:150].replace("\n", "")[:100] + "...",
-            }
-            for item in news_items
-        ]
-    except Exception as e:
-        logger.error(f"Error fetching news: {e}")
+    query = select(models.News).order_by(models.News.origin_created_at.desc())
+    if page > 1:
+        query = query.offset((page - 1) * 10)
+    result = db.execute(query.limit(10))
+    news_items = result.scalars().all()
+    if not news_items:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No news items found",
         )
+    return [
+        {
+            **item.__dict__,
+            "photo_url": item.photo_url,
+            "content": item.content[:150].replace("\n", "")[:100] + "...",
+        }
+        for item in news_items
+    ]
 
 
 @app.get("/api/news/{news_id}", response_model=NewsResponse)
@@ -124,6 +123,54 @@ async def get_news_item_api(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+@app.get("/api/search", response_model=list[NewsSearchResponse])
+async def api_search(
+    req: Request,
+    db: Annotated[Session, Depends(get_db)],
+    text: str | None = None,
+    origin_date_from: str | None = None,
+    origin_date_to: str | None = None,
+    inserted_date_from: str | None = None,
+    inserted_date_to: str | None = None,
+    page: int = 1,
+):
+    logger.info(f"API Search called with query: {req.url.query}")
+    query = select(models.News)
+    if text:
+        query = query.where(
+            models.News.title.ilike(f"%{text}%")
+            | models.News.content.ilike(f"%{text}%")
+        )
+    if origin_date_from:
+        d = datetime.fromisoformat(origin_date_from)
+        query = query.where(models.News.origin_created_at >= d)
+    if origin_date_to:
+        d = datetime.fromisoformat(origin_date_to)
+        query = query.where(models.News.origin_created_at < d + timedelta(days=1))
+    if inserted_date_from:
+        d = datetime.fromisoformat(inserted_date_from)
+        query = query.where(models.News.inserted_at >= d)
+    if inserted_date_to:
+        d = datetime.fromisoformat(inserted_date_to)
+        query = query.where(models.News.inserted_at < d + timedelta(days=1))
+    if page > 1:
+        query = query.offset((page - 1) * 50)
+    result = db.execute(query.order_by(models.News.origin_created_at.desc()).limit(50))
+    news_items = result.scalars().all()
+    if not news_items:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No news items found matching the search criteria",
+        )
+    return [
+        {
+            **item.__dict__,
+            "content": item.content[:150].replace("\n", "")[:100] + "...",
+        }
+        for item in news_items
+    ]
 
 
 @app.exception_handler(StarletteHTTPException)
