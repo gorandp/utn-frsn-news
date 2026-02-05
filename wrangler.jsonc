@@ -32,28 +32,6 @@
     "LOGGER_LEVEL": "INFO",
     "TIMEOUT": "180"
   },
-  "secrets_store_secrets": [
-    {
-      "binding": "TELEGRAM_API_KEY",
-      "store_id": "340c0b7160f146cfa5089591b35a498d",
-      "secret_name": "GORANDP_TELEGRAM_API_KEY"
-    },
-    {
-      "binding": "CLOUDFLARE_ACCOUNT_ID",
-      "store_id": "340c0b7160f146cfa5089591b35a498d",
-      "secret_name": "CLOUDFLARE_ACCOUNT_ID"
-    },
-    {
-      "binding": "CLOUDFLARE_IMAGES_ACCOUNT_HASH",
-      "store_id": "340c0b7160f146cfa5089591b35a498d",
-      "secret_name": "CLOUDFLARE_IMAGES_ACCOUNT_HASH"
-    },
-    {
-      "binding": "CLOUDFLARE_IMAGES_API_TOKEN",
-      "store_id": "340c0b7160f146cfa5089591b35a498d",
-      "secret_name": "CLOUDFLARE_IMAGES_API_TOKEN"
-    }
-  ],
 
   "d1_databases": [
     {
