@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # from database_models import Base as DbBase
 from .. import database_models as models
@@ -57,10 +57,26 @@ async def get_news_item(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"News item with ID {news_id} not found",
         )
+
+    def convert_dt(dt):
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone(timedelta(hours=-3)))
+
     return templates.TemplateResponse(
         req,
         "news_detail.html",
-        {"news": news},
+        {
+            "news": {
+                **news.__dict__,
+                "photo_url": news.photo_url,
+                "origin_created_at": convert_dt(news.origin_created_at),
+                "indexed_at": convert_dt(news.indexed_at),
+                "inserted_at": convert_dt(news.inserted_at),
+            }
+        },
     )
 
 
