@@ -9,7 +9,7 @@
   <h1>Últimas noticias</h1>
 
   <div>
-    <a href="#"
+    <a href="{{ url_for('search') }}"
       class="bg-sky-700 hover:bg-sky-900
         border-2 border-transparent hover:border-sky-200
         text-white
@@ -22,31 +22,12 @@
   </div>
 </div>
 
-{% for news in news_list %}
-<a class="flex flex-row gap-2
-    max-w-3xl mx-auto py-4 px-4
-    border-2 border-t-transparent border-x-transparent border-b-slate-600
-    last:border-0
-    hover:bg-slate-800 hover:border-sky-200
-    "
-  href="{{ url_for('get_news_item', news_id=news.id) }}"
-  style="cursor: pointer;"
->
-  <div class="w-50 my-auto flex-shrink-0">
-    <img src="{{ news.photo_url }}" alt="News Image" class="w-full h-auto mb-4 rounded-lg shadow-md">
-  </div>
-  <div>
-    <h1 class="space-y-2 text-xl font-semibold">{{ news.title }}</h1>
-    {% if news.origin_created_at %}
-    <h2 class="text-sm text-slate-400 mb-2">{{ news.origin_created_at.strftime("%d/%m/%Y %H:%M") }}</h2>
-    {% endif %}
-    <p class="space-y-2">{{ news.content[:100] + "..." }}</p>
-  </div>
-</a>
-{% endfor %}
+<div id="news-list">
+  <!-- News items will be loaded here dynamically -->
+</div>
 
 <div class="mt-5 mb-15 max-w-3xl mx-auto flex justify-center gap-4">
-  <a href="#"
+  <a href="{{ url_for('search') }}"
     class="bg-sky-700 hover:bg-sky-900
       border-2 border-transparent hover:border-sky-200
       text-white
@@ -57,17 +38,22 @@
     <i data-lucide="search" class="w-4 h-4"></i>
     Búsqueda Avanzada
   </a>
-  <a href="#"
+  <button
+    type="button"
+    id="load-more-btn"
     class="bg-sky-700 hover:bg-sky-900
       border-2 border-transparent hover:border-sky-200
       text-white
       px-5 py-1 rounded-lg
       flex items-center gap-2 transition-all duration-200
       shadow-md hover:shadow-lg"
+    onclick="loadMoreResults()"
   >
     <i data-lucide="rotate-cw" class="w-4 h-4"></i>
     Cargar Más
-  </a>
+  </button>
 </div>
+
+<script src="/static/js/home.js"></script>
 
 {% endblock content %}
