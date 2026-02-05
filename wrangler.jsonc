@@ -27,7 +27,6 @@
   },
 
   "vars": {
-    "TELEGRAM_CHAT_ENV": "dev", // CHANGE TO "prod" FOR PROD ENVIRONMENT
     "TELEGRAM_SILENT_MODE": "false",
     "LOGGER_LEVEL": "INFO",
     "TIMEOUT": "180"
