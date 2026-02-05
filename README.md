@@ -2,7 +2,7 @@
 
 <img src="./docs/images/logo.jpg" alt="Logo" width="100" style="margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto" />
 
-Webpage (under construction): https://utn.gorandp.com
+Webpage: https://utn.gorandp.com
 
 Telegram Channel: https://t.me/utnfrsnnews
 
