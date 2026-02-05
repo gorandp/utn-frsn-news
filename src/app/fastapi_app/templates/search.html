@@ -1,0 +1,133 @@
+{% extends "layout.html" %}
+{% block content %}
+
+
+<div class="max-w-3xl mx-auto my-5 px-4 py-8">
+  <h1 class="text-2xl font-bold text-white">Buscador</h1>
+  <form
+    id="search-form"
+    method="get"
+    onsubmit="search(event)"
+    class="mt-4 flex flex-col gap-2"
+  >
+    <div class="flex gap-2">
+      <input
+        type="text"
+        name="text"
+        placeholder="Ingrese texto a buscar..."
+        value="{{ query | default('') }}"
+        class="w-full p-2 rounded-lg bg-slate-700 text-white border border-slate-600 focus:outline-none focus:border-sky-400"
+      >
+    </div>
+    <div class="flex flex-col md:flex-row gap-5 items-center justify-between">
+      <div class="flex flex-col">
+        <label class="text-white my-2">Fecha de origen:</label>
+        <div>
+          <input
+            type="date"
+            name="origin_date_from"
+            value="{{ origin_date_from | default('') }}"
+            class="p-2 rounded-lg bg-slate-700 text-white border border-slate-600 focus:outline-none focus:border-sky-400"
+          >
+          <span class="text-white mx-2">-</span>
+          <input
+            type="date"
+            name="origin_date_to"
+            value="{{ origin_date_to | default('') }}"
+            class="p-2 rounded-lg bg-slate-700 text-white border border-slate-600 focus:outline-none focus:border-sky-400"
+          >
+        </div>
+      </div>
+      <div class="flex flex-col">
+        <label class="text-white my-2">Fecha de inserción:</label>
+        <div>
+          <input
+            type="date"
+            name="inserted_date_from"
+            value="{{ inserted_date_from | default('') }}"
+            class="p-2 rounded-lg bg-slate-700 text-white border border-slate-600 focus:outline-none focus:border-sky-400"
+          >
+          <span class="text-white mx-2">-</span>
+          <input
+            type="date"
+            name="inserted_date_to"
+            value="{{ inserted_date_to | default('') }}"
+            class="p-2 rounded-lg bg-slate-700 text-white border border-slate-600 focus:outline-none focus:border-sky-400"
+          >
+        </div>
+      </div>
+    </div>
+    <div class="mt-4 flex gap-4">
+      <button
+        type="submit"
+        class="bg-sky-700 hover:bg-sky-900
+          border-2 border-transparent hover:border-sky-200
+          text-white
+          px-4 py-2 rounded-lg
+          flex items-center gap-2 transition-all duration-200
+          shadow-md hover:shadow-lg"
+      >
+        <i data-lucide="search" class="w-4 h-4"></i>
+        Buscar
+      </button>
+      <button
+        type="button"
+        class="bg-sky-700 hover:bg-sky-900
+          border-2 border-transparent hover:border-sky-200
+          text-white
+          px-4 py-2 rounded-lg
+          flex items-center gap-2 transition-all duration-200
+          shadow-md hover:shadow-lg"
+        onclick="resetForm()"
+      >
+        <i data-lucide="list-restart" class="w-4 h-4"></i>
+        Limpiar
+      </button>
+    </div>
+  </form>
+
+</div>
+
+<div id="search-results" class="hidden mb-15">
+
+  <table id="search-results-table"
+    class="w-3xl mx-auto mt-7 p-6 rounded-lg shadow-md"
+  >
+    <thead>
+      <tr class="bg-slate-800/50">
+        <th class="p-2 border-b border-slate-600 text-left">Título</th>
+        <th class="p-2 border-b border-slate-600 text-left">Fecha de origen</th>
+        <th class="p-2 border-b border-slate-600 text-left">Fecha de inserción</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+
+  <button
+    id="search-load-more-btn"
+    class="
+      bg-sky-700 hover:bg-sky-900
+      border-2 border-transparent hover:border-sky-200
+      text-white
+      mt-5 mx-auto px-5 py-1 rounded-lg
+      flex items-center gap-2 transition-all duration-200
+      shadow-md hover:shadow-lg"
+    type="button"
+    onclick="loadMoreResults()"
+  >
+    <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+    Cargar Más
+  </button>
+
+  <div id="search-results-empty"
+    class="w-3xl mx-auto mt-7 p-6 rounded-lg
+      flex items-center justify-center
+      border-2 border-sky-200 shadow-md">
+    <p>No se encontraron resultados.</p>
+  </div>
+</div>
+
+<script src="/static/js/search.js"></script>
+
+{% endblock content %}

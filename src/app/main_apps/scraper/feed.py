@@ -3,7 +3,7 @@ import os
 import bs4
 from pyodide.http import pyfetch
 
-from ..logger import LogWrapper
+from ...logger import LogWrapper
 
 
 class WORDPRESS_SITE:

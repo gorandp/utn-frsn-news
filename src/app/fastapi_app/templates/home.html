@@ -1,0 +1,59 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="max-w-3xl mx-auto mb-5 py-8 px-4
+  text-3xl font-bold
+  flex gap-2 flex-col sm:flex-row
+  justify-between items-center"
+>
+  <h1>Últimas noticias</h1>
+
+  <div>
+    <a href="{{ url_for('search') }}"
+      class="bg-sky-700 hover:bg-sky-900
+        border-2 border-transparent hover:border-sky-200
+        text-white
+        p-2 rounded-lg
+        flex items-center gap-2 transition-all duration-200
+        shadow-md hover:shadow-lg max-w-fit"
+    >
+      <i data-lucide="search" class="w-4 h-4"></i>
+    </a>
+  </div>
+</div>
+
+<div id="news-list">
+  <!-- News items will be loaded here dynamically -->
+</div>
+
+<div class="mt-5 mb-15 max-w-3xl mx-auto flex justify-center gap-4">
+  <a href="{{ url_for('search') }}"
+    class="bg-sky-700 hover:bg-sky-900
+      border-2 border-transparent hover:border-sky-200
+      text-white
+      px-5 py-1 rounded-lg
+      flex items-center gap-2 transition-all duration-200
+      shadow-md hover:shadow-lg"
+  >
+    <i data-lucide="search" class="w-4 h-4"></i>
+    Búsqueda Avanzada
+  </a>
+  <button
+    type="button"
+    id="load-more-btn"
+    class="bg-sky-700 hover:bg-sky-900
+      border-2 border-transparent hover:border-sky-200
+      text-white
+      px-5 py-1 rounded-lg
+      flex items-center gap-2 transition-all duration-200
+      shadow-md hover:shadow-lg"
+    onclick="loadMoreResults()"
+  >
+    <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+    Cargar Más
+  </button>
+</div>
+
+<script src="/static/js/home.js"></script>
+
+{% endblock content %}

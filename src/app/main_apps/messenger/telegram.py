@@ -3,8 +3,8 @@ from pyodide.http import pyfetch
 from typing import Generator
 import json
 
-from ..logger import LogWrapper
-from ..constants import TELEGRAM_CHANNEL_DEBUG
+from ...logger import LogWrapper
+from ...constants import TELEGRAM_CHANNEL_DEBUG
 
 
 def chunk_message(sequence: str) -> Generator[str, None, None]:

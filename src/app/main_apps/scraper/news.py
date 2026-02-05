@@ -4,7 +4,7 @@ from pyodide.http import pyfetch
 from datetime import datetime
 from time import time
 
-from ..logger import LogWrapper
+from ...logger import LogWrapper
 
 
 TIMEOUT = int(os.getenv("TIMEOUT") or "60")

@@ -7,6 +7,8 @@ from sqlalchemy import Integer, Float, String, Text
 from sqlalchemy.types import TypeDecorator
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 
+from .cloudflare_images import CloudflareImages
+
 
 class DateTimeString(TypeDecorator[datetime]):
     impl = String
@@ -38,7 +40,7 @@ class News(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     url: Mapped[str] = mapped_column(String(511), unique=True, index=True)
-    title: Mapped[str] = mapped_column(String(127))
+    title: Mapped[str] = mapped_column(String(511))
     content: Mapped[str] = mapped_column(Text)
     photo_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     response_elapsed_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -55,3 +57,9 @@ class News(Base):
         DateTimeString,
         default=lambda: datetime.now(UTC),
     )
+
+    @property
+    def photo_url(self) -> str | None:
+        if self.photo_id is None:
+            return "/static/img/news_placeholder.jpg"
+        return CloudflareImages.get_public_url(self.photo_id)
