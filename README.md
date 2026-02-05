@@ -57,13 +57,13 @@ Field | Type | Description
 id | INTEGER | Unique identifier of each news
 url | VARCHAR(511) | Unique URL identifying this news
 title | VARCHAR(127) | Title of the news
-body | TEXT | News content
-photo | VARCHAR(63) | Image location
-photo_url | VARCHAR(127) | Image public URL (to send via Telegram instead of the content)
-index_at | TEXT | Moment when the [Index Scraper](#index-scraper) detected this news
+content | TEXT | News content
+photo_id | VARCHAR(36) | Cloudflare Images ID
+response_elapsed_seconds | REAL | Seconds taken by the faculty server to complete the HTTP request
+parse_elapsed_seconds | REAL | Seconds taken to parse the HTML
+origin_created_at | TEXT | News creation datetime by origin
+indexed_at | TEXT | Moment when the [Index Scraper](#index-scraper) detected this news
 inserted_at | TEXT | Moment when the [Main Scraper](#main-scraper) inserted this news
-response_elapsed_time | REAL | Seconds taken by the faculty server to complete the HTTP request
-parse_elapsed_time | REAL | Seconds taken to parse the HTML
 
 ## Queues Structure
 
@@ -73,10 +73,9 @@ Scraper queue.
 
 Field | Type | Description
 --- | --- | ---
-news_url | | News URL
-inserted_at | | Insertion date
-updated_at | | Update date
-status | Integer | 0=unprocessed / 1=success / 99=error
+news_url | string | News URL
+photo_url | string | Origin photo url
+inserted_at | string | Insertion date
 
 ### utn-frsn-news-messenger
 
@@ -84,10 +83,8 @@ Messenger queue.
 
 Field | Type | Description
 --- | --- | ---
-news_id | Integer | News identifier
-inserted_at | | Insertion date
-updated_at | | Update date
-status | Integer | 0=unprocessed / 1=success / 99=error
+news_id | integer | News identifier
+inserted_at | string | Insertion date
 
 
 ## Infrastructure
@@ -109,6 +106,7 @@ status | Integer | 0=unprocessed / 1=success / 99=error
   - Pricey SQL (that's why we kept MongoDB Atlas)
   - Configurable via handy Shell scripts
 - Hosting Cloudflare (Workers + Queues + D1 + Images): current
+  - Migration from GCP to Cloudflare: https://github.com/gorandp/utn-frsn-news/issues/3
   - Highly available and robust network
   - Nice and simple ecosystem of tools
   - Free tiers are really generous
@@ -120,12 +118,26 @@ status | Integer | 0=unprocessed / 1=success / 99=error
 
 Private keys like Telegram API Key, are stored as a secret. The approach we do is the following. In development we store the secrets in a `.env` file. For testing we store the secrets in Github actions. For production we store the secrets in the Cloudflare Platform.
 
-```
-TELEGRAM_API_KEY="..."
-## Defaults
-# LOGGER_LEVEL=INFO
-```
+Variable name | Description | Default value | Allowed values or types
+--- | --- | --- | ---
+TELEGRAM_CHAT_ENV | Select debug or production chat | dev | dev, prod
+TELEGRAM_API_KEY | API Key to access telegram bot |  | string
+TELEGRAM_SILENT_MODE | Send messages with notifications without sound | false | false, true
+CLOUDFLARE_ACCOUNT_ID | Cloudflare Account ID | | string
+CLOUDFLARE_IMAGES_ACCOUNT_HASH | Cloudflare Account Hash (visible in Images platform) | | string
+CLOUDFLARE_IMAGES_API_TOKEN | Cloudflare Images API Token | | string
+LOGGER_LEVEL | Start level of logging | INFO | DEBUG, INFO, WARNING, ERROR
+TIMEOUT | Timeout for requests | 180 | number
 
-Currently, there's only one secret, the `TELEGRAM_API_KEY`. The other is an environment configuration. We want only to log the INFO and above logs in production, but on development we want it to show starting from the DEBUG logs.
+`.env` template
 
-<!-- Maybe for production we want WARNING as the default LOGGER_LEVEL -->
+```
+TELEGRAM_CHAT_ENV="dev"
+TELEGRAM_API_KEY="<SECRET>"
+TELEGRAM_SILENT_MODE="false"
+CLOUDFLARE_ACCOUNT_ID="<SECRET>"
+CLOUDFLARE_IMAGES_ACCOUNT_HASH="<SECRET>"
+CLOUDFLARE_IMAGES_API_TOKEN="<SECRET>"
+LOGGER_LEVEL="INFO"
+TIMEOUT="180"
+```
