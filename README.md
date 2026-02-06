@@ -6,6 +6,8 @@ Webpage: https://utn.gorandp.com
 
 Telegram Channel: https://t.me/utnfrsnnews
 
+Detailed information about this project: https://utn.gorandp.com/about
+
 ## Introduction
 
 Scripts for data extraction and publishing of the latest news of the faculty in a Telegram channel.
