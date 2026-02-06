@@ -25,6 +25,7 @@
 <div id="news-list">
   <!-- News items will be loaded here dynamically -->
 </div>
+<i data-lucide="loader-circle" class="animate-spin hidden w-6 h-6 mt-6 mb-15 mx-auto" id="spinner"></i>
 
 <div class="mt-5 mb-15 max-w-3xl mx-auto flex justify-center gap-4">
   <a href="{{ url_for('search') }}"
@@ -46,7 +47,13 @@
       text-white
       px-5 py-1 rounded-lg
       flex items-center gap-2 transition-all duration-200
-      shadow-md hover:shadow-lg"
+      shadow-md hover:shadow-lg
+      cursor-pointer
+      disabled:cursor-not-allowed
+      disabled:border-transparent
+      disabled:bg-sky-900/20 disabled:text-gray-500
+      disabled:shadow-none
+      "
     onclick="loadMoreResults()"
   >
     <i data-lucide="rotate-cw" class="w-4 h-4"></i>

@@ -12,10 +12,14 @@ const apiSearchCall = async () => {
 }
 
 const loadMoreResults = async () => {
+    document.getElementById("spinner").classList.remove("hidden");
+    document.getElementById("load-more-btn").disabled = true;
     console.log("Loading more results...");
     page++;
     const res = await apiSearchCall();
     render(res);
+    document.getElementById("spinner").classList.add("hidden");
+    document.getElementById("load-more-btn").disabled = false;
 }
 
 const formatDatetime = (dateString) => {
