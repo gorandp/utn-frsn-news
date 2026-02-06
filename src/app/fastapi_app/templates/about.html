@@ -14,15 +14,17 @@
       shadow-md hover:shadow-lg"
     onclick="switchLanguage()"
   >
-    Cambiar a Español
+    <img id="switch-lang-flag-arg" src="/static/icons/flag-argentina-2.svg" alt="Argentine Flag" class="w-5 h-5"/>
+    <img id="switch-lang-flag-us" src="/static/icons/flag-us.svg" alt="US Flag" class="w-5 h-5 hidden"/>
+    <div id="switch-lang-btn-text">Español (click to switch to English)</div>
   </button>
 </div>
 
-<div id="about-es" class="hidden">
+<div id="about-es">
   {% include 'about_es.html' %}
 </div>
 
-<div id="about-en">
+<div id="about-en" class="hidden">
   {% include 'about_en.html' %}
 </div>
 
