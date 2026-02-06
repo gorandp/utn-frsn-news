@@ -59,25 +59,37 @@
     </div>
     <div class="mt-4 flex gap-4">
       <button
+        id="search-btn"
         type="submit"
         class="bg-sky-700 hover:bg-sky-900
           border-2 border-transparent hover:border-sky-200
           text-white
           px-4 py-2 rounded-lg
-          flex items-center gap-2 transition-all duration-200
-          shadow-md hover:shadow-lg"
+          flex items-center gap-2
+          shadow-md hover:shadow-lg
+          cursor-pointer
+          disabled:cursor-not-allowed
+          disabled:border-transparent
+          disabled:bg-sky-900/20 disabled:text-gray-500
+          disabled:shadow-none"
       >
         <i data-lucide="search" class="w-4 h-4"></i>
         Buscar
       </button>
       <button
+        id="reset-btn"
         type="button"
         class="bg-sky-700 hover:bg-sky-900
           border-2 border-transparent hover:border-sky-200
           text-white
           px-4 py-2 rounded-lg
-          flex items-center gap-2 transition-all duration-200
-          shadow-md hover:shadow-lg"
+          flex items-center gap-2
+          shadow-md hover:shadow-lg
+          cursor-pointer
+          disabled:cursor-not-allowed
+          disabled:border-transparent
+          disabled:bg-sky-900/20 disabled:text-gray-500
+          disabled:shadow-none"
         onclick="resetForm()"
       >
         <i data-lucide="list-restart" class="w-4 h-4"></i>
@@ -111,8 +123,13 @@
       border-2 border-transparent hover:border-sky-200
       text-white
       mt-5 mx-auto px-5 py-1 rounded-lg
-      flex items-center gap-2 transition-all duration-200
-      shadow-md hover:shadow-lg"
+      flex items-center gap-2
+      shadow-md hover:shadow-lg
+      cursor-pointer
+      disabled:cursor-not-allowed
+      disabled:border-transparent
+      disabled:bg-sky-900/20 disabled:text-gray-500
+      disabled:shadow-none"
     type="button"
     onclick="loadMoreResults()"
   >
@@ -127,6 +144,7 @@
     <p>No se encontraron resultados.</p>
   </div>
 </div>
+<i data-lucide="loader-circle" class="animate-spin hidden w-6 h-6 mt-6 mb-15 mx-auto" id="spinner"></i>
 
 <script src="/static/js/search.js"></script>
 

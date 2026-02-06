@@ -1,6 +1,24 @@
 let searchQueryString = "";
 let searchPage = 1;
 
+const setLoadingState = (isLoading) => {
+    const spinner = document.getElementById("spinner");
+    const searchBtn = document.getElementById("search-btn");
+    const resetBtn = document.getElementById("reset-btn");
+    const loadMoreBtn = document.getElementById("search-load-more-btn");
+    if (isLoading) {
+        spinner.classList.remove("hidden");
+        searchBtn.disabled = true;
+        resetBtn.disabled = true;
+        loadMoreBtn.disabled = true;
+    } else {
+        spinner.classList.add("hidden");
+        searchBtn.disabled = false;
+        resetBtn.disabled = false;
+        loadMoreBtn.disabled = false;
+    }
+}
+
 
 const apiSearchCall = async () => {
     const endpoint = "/api/search?" + searchQueryString + `&page=${searchPage}`;
@@ -39,6 +57,7 @@ const resetForm = () => {
     searchQueryString = "";
     searchPage = 1;
     document.getElementById("search-results").classList.add("hidden");
+    setLoadingState(false);
 }
 
 const formatDatetime = (dateString) => {
@@ -65,6 +84,8 @@ const search = async (e) => {
         alert("Por favor ingrese al menos un filtro para buscar.");
         return;
     }
+    document.getElementById("search-results").classList.add("hidden");
+    setLoadingState(true);
     query(
         formData.get("text"),
         formData.get("origin_date_from"),
@@ -76,14 +97,17 @@ const search = async (e) => {
     const res = await apiSearchCall();
     // console.log(res);
     renderSearchResults(res);
+    setLoadingState(false);
 }
 
 const loadMoreResults = async (e) => {
+    setLoadingState(true);
     console.log("Loading more results...");
     // Implement pagination logic here if needed
     searchPage++;
     const res = await apiSearchCall();
     renderRows(res);
+    setLoadingState(false);
 }
 
 const renderSearchResults = (results) => {
@@ -99,6 +123,8 @@ const renderSearchResults = (results) => {
             .classList.add("hidden");
         document.getElementById("search-results-empty")
             .classList.remove("hidden");
+        document.getElementById("search-load-more-btn")
+            .classList.add("hidden");
         return;
     } else {
         document.getElementById("search-results-table")
