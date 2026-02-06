@@ -1,0 +1,546 @@
+<div class="mx-auto max-w-5xl my-8 flex gap-10 flex-col sm:flex-row items-center justify-center align-middle">
+  <div>
+    <img src="/static/icons/logo.jpg" alt="Logo" width="100" />
+  </div>
+  <h1 class="text-3xl font-bold font-roboto" >UTN FRSN NEWS Project</h1>
+</div>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">What is it?</h2>
+  <p>This is a personal project to practice robust processes of web
+    scraping and automation, use of task queues, SQL databases, and
+    learn about Cloudflare Workers and its ecosystem of tools.
+  </p>
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">How does it work?</h2>
+  <p>The project consists of several scripts responsible for
+    extracting and publishing the latest faculty news to a Telegram
+    channel.
+  </p>
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">Where can I see it?</h2>
+  <p>On the Telegram channel:
+    <a href="https://t.me/utnfrsnnews" class="text-blue-500">https://t.me/utnfrsnnews</a>
+  </p>
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">What technologies does it use?</h2>
+  <p>It uses Cloudflare Workers to host the scripts, Cloudflare D1 as
+    the SQL database, Cloudflare Queues to manage tasks, and Cloudflare
+    Images to store news images.</p>
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">How is the project structured?</h2>
+  <p>The project consists of four main applications: the Index Scraper,
+    the Main Scraper, the Messenger, and the Webpage. Each has a
+    specific role in the news extraction and publication process.
+  </p>
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">Index Scraper</h2>
+
+  <p>Detects new news and extracts their URLs</p>
+
+  <p>Runs at the 0th minute of every hour.</p>
+
+  <p>Its workflow starts by fetching the URL of the latest news
+    available in the database. If it's the first run, it fetches none
+    and stores None.
+  </p>
+
+  <p>Then, it retrieves the latest faculty news, parses them, and checks
+    if it finds the database URL among the first 5 most recent ones.
+  </p>
+
+  <p>If so, it stops at that point and filters out any news that already
+    exist in the DB. If news remain after filtering, it inserts all the
+    URLs found on that page (in ascending chronological order) into the
+    <code class="bg-sky-100/30 mx-1 px-1">utn-frsn-news-scraper</code>
+    queue for the Main Scraper to process and retrieve the full
+    information.
+  </p>
+
+  <p>If the latest DB news is not found in the first 5 news, it
+    continues with the next 4 pages and performs the same analysis but
+    this time on the entire news list except the 5 oldest (since to
+    ensure there were no gaps in news publication by the source, we
+    assume publishing news prior to the latest is an edge case, and we
+    set a margin that they might publish a news 5 spots behind the most
+    recent ones).
+  </p>
+
+  <p>If it stops at any point, it performs the mentioned analysis,
+    filters all news URLs that already exist in the DB, and adds the new
+    ones to the
+    <code class="bg-sky-100/30 mx-1 px-1">utn-frsn-news-scraper</code>
+    queue.
+  </p>
+
+  <p>If it doesn't stop, it fetches batches of 5 pages and it continues
+    to the last page of news results, and then performs the cutoff and
+    proceeds to filtering and insertion into the queue.
+  </p>
+
+  <img src="/static/img/indexScraper.transparent.drawio.png"
+    alt="Index Scraper Workflow Diagram"
+    class="max-w-lg mx-auto"
+    />
+
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">Main Scraper</h2>
+
+  <p>Extracts the full information of each news from its URL</p>
+
+  <p>Runs a single instance at a time, triggered by the
+    <code class="bg-sky-100/30 mx-1 px-1">utn-frsn-news-scraper</code>
+    queue.
+  </p>
+
+  <p>Cloudflare, if there are tasks in the queue, spins up a single
+    worker to process all pending tasks. It's up to the developer
+    whether to process them sequentially or in parallel, which is a
+    great advantage since this project depends on being sequential in
+    the order news are saved and published.
+  </p>
+
+  <p>Upon finishing scraping, it saves the news image to Cloudflare
+    Images and stores all news information in the SQL DB (Cloudflare
+    D1).
+  </p>
+
+  <p>Finally, it inserts a task into the
+    <code class="bg-sky-100/30 mx-1 px-1">utn-frsn-news-messenger</code>
+    work queue for the Messenger to send the news via Telegram.
+  </p>
+
+  <img src="/static/img/mainScraper.transparent.drawio.png"
+    alt="Main Scraper Workflow Diagram"
+    class="max-w-lg mx-auto"
+    />
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">Messenger</h2>
+
+  <p>Sends the news via Telegram</p>
+
+  <p>Runs a single instance at a time, triggered by the
+    <code class="bg-sky-100/30 mx-1 px-1">utn-frsn-news-messenger</code>
+    queue.
+  </p>
+
+  <p>Like the previous workflow, Cloudflare spins up a single worker to
+    process all pending tasks in the work queue. This is very convenient
+    for processing each pending messaging task sequentially and sending
+    news in the correct chronological order via Telegram.
+  </p>
+
+  <p>This application's workflow is very simple: for each task, it
+    fetches the news information from the DB by ID, formats the message,
+    and sends it via Telegram. It sends the news image first, then the
+    title and content in a separate message. This is done because
+    Telegram's image "caption" has a relatively low character limit
+    compared to the amount of characters in each news content. In fact,
+    sometimes news exceed Telegram's own text message character limit,
+    so the content is split every certain number of characters to send
+    it in multiple messages, thus avoiding losing news information.
+    We can safely say this happens very rarely, and at most, the content
+    has to be sent in two messages.
+  </p>
+
+  <img src="/static/img/messenger.transparent.drawio.png"
+    alt="Messenger Workflow Diagram"
+    class="max-w-lg mx-auto"
+    />
+
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">What is the database structure?</h2>
+
+  <p>The database consists of a single table called "news" that stores
+    all information related to each news item, including its URL, title,
+    content, creation date, among other fields.
+  </p>
+
+  <table class="w-full border-collapse border border-gray-300">
+  <thead class="bg-gray-100 border-b border-gray-300 text-left text-gray-800">
+    <tr>
+      <th class="p-2">Field</th>
+      <th class="p-2">Type</th>
+      <th class="p-2">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">id</td>
+      <td class="p-2">INTEGER</td>
+      <td class="p-2">Unique identifier for each news item</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">url</td>
+      <td class="p-2">VARCHAR(511)</td>
+      <td class="p-2">Unique URL identifying this news</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">title</td>
+      <td class="p-2">VARCHAR(511)</td>
+      <td class="p-2">News title</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">content</td>
+      <td class="p-2">TEXT</td>
+      <td class="p-2">News content</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">photo_id</td>
+      <td class="p-2">VARCHAR(36)</td>
+      <td class="p-2">Image ID in Cloudflare Images</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">response_elapsed_seconds</td>
+      <td class="p-2">REAL</td>
+      <td class="p-2">Seconds the faculty server took to complete the HTTP request</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">parse_elapsed_seconds</td>
+      <td class="p-2">REAL</td>
+      <td class="p-2">Seconds taken to parse the HTML</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">origin_created_at</td>
+      <td class="p-2">TEXT</td>
+      <td class="p-2">Date and time of news creation by the source</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">indexed_at</td>
+      <td class="p-2">TEXT</td>
+      <td class="p-2">Time when the Index Scraper detected this news</td>
+    </tr>
+    <tr>
+      <td class="p-2">inserted_at</td>
+      <td class="p-2">TEXT</td>
+      <td class="p-2">Time when the Main Scraper inserted this news</td>
+    </tr>
+  </tbody>
+  </table>
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">What is the structure of the work queues?</h2>
+
+  <p>The project uses two work queues to manage scraping tasks and
+    message sending via Telegram.
+  </p>
+
+  <p>The first queue, called
+    <code class="bg-sky-100/30 mx-1 px-1">utn-frsn-news-scraper</code>,
+    stores the URLs of news detected as new by the Index Scraper that
+    the Main Scraper must process to extract the full information of
+    each news.
+  </p>
+
+  <table class="w-full border-collapse border border-gray-300">
+    <thead class="bg-gray-100 border-b border-gray-300 text-left text-gray-800">
+      <th class="p-2">Field</th>
+      <th class="p-2">Type</th>
+      <th class="p-2">Description</th>
+    </thead>
+    <tbody>
+      <tr class="border-b border-gray-300/50">
+        <td class="p-2">news_url</td>
+        <td class="p-2">string</td>
+        <td class="p-2">URL of the news to process</td>
+      </tr>
+      <tr class="border-b border-gray-300/50">
+        <td class="p-2">photo_url</td>
+        <td class="p-2">string</td>
+        <td class="p-2">URL of the news photo to process</td>
+      </tr>
+      <tr class="border-b border-gray-300/50">
+        <td class="p-2">inserted_at</td>
+        <td class="p-2">string</td>
+        <td class="p-2">Date of task insertion into the queue (news indexing date)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>The second queue, called
+    <code class="bg-sky-100/30 mx-1 px-1">utn-frsn-news-messenger</code>,
+    stores the IDs of news processed by the Main Scraper that the
+    Messenger must send via Telegram.
+  </p>
+
+  <table class="w-full border-collapse border border-gray-300">
+    <thead class="bg-gray-100 border-b border-gray-300 text-left text-gray-800">
+      <th class="p-2">Field</th>
+      <th class="p-2">Type</th>
+      <th class="p-2">Description</th>
+    </thead>
+    <tbody>
+      <tr class="border-b border-gray-300/50">
+        <td class="p-2">news_id</td>
+        <td class="p-2">integer</td>
+        <td class="p-2">Internal ID of the news to process</td>
+      </tr>
+      <tr class="border-b border-gray-300/50">
+        <td class="p-2">inserted_at</td>
+        <td class="p-2">string</td>
+        <td class="p-2">Date of task insertion into the queue (news insertion date)</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">What infrastructure is used?</h2>
+
+  <p>Currently, the entire project (that is, the 4 apps) is hosted on
+    Cloudflare Workers, using Cloudflare D1 as the SQL database,
+    Cloudflare Queues to manage tasks, and Cloudflare Images to store
+    news images.
+  </p>
+
+  <p>It uses the Workers Paid plan and the 100k Images plan
+    (also paid).
+  </p>
+
+  <p>The list of services and their documentation is as follows:</p>
+
+  <ul class="ml-8 list-disc">
+    <li>Cloudflare Workers: <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://workers.cloudflare.com/">https://workers.cloudflare.com/</a></li>
+    <li>Cloudflare D1 (main database): <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://developers.cloudflare.com/d1/">https://developers.cloudflare.com/d1/</a></li>
+    <li>Cloudflare Images: <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://developers.cloudflare.com/images/">https://developers.cloudflare.com/images/</a></li>
+    <li>Cloudflare Queues: <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://developers.cloudflare.com/queues/">https://developers.cloudflare.com/queues/</a></li>
+  </ul>
+</section>
+
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">Has the same infrastructure always been used?</h2>
+
+  <p>No, the project has undergone several infrastructure migrations
+    to reach the current one on Cloudflare Workers. This was due to
+    various factors, such as changes in the free plans of the services
+    used, the need for greater robustness and availability, and the
+    search for better integration between the tools used.
+  </p>
+
+  <p>It started with Heroku and MongoDB Atlas, then migrated to GCP
+    (while keeping MongoDB Atlas), and finally to Cloudflare Workers.
+  </p>
+
+  <p>From each of those stages, I learned a lot, and from the
+    migrations, I learned even more.
+  </p>
+
+
+  <h3 class="text-xl font-roboto font-semibold italic
+    ml-2 flex gap-2 items-center"
+  >
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    Heroku
+  </h3>
+
+  <p>What I can say about Heroku is that it was a good platform to
+    start with, especially due to its ease of use and ecosystem of
+    tools (which at the time were free).
+  </p>
+
+  <p>Scheduler and Task were used to schedule and run the scraping and
+    messaging/notification applications.
+  </p>
+
+  <p><a href="https://help.heroku.com/RSBRUH58/removal-of-heroku-free-product-plans-faq"
+    target="_blank"
+    class="text-sky-500 underline hover:text-sky-200"
+  >
+    Starting November 28, 2022, Heroku removed its free plans, which
+    led to the need to migrate to another platform to maintain the
+    project's austerity.
+  </a></p>
+
+  <a class="mx-auto text-center text-sky-500 underline
+    hover:text-sky-200 flex gap-2 items-center max-w-fit bg-sky-700/30 p-2 rounded-lg"
+    target="_blank"
+    href="https://github.com/gorandp/utn-frsn-news/tree/5f98c06"
+  >
+    <i data-lucide="github" class="w-4 h-4"></i>
+    Project repository at the time Heroku was used
+  </a>
+
+  <h3 class="text-xl font-roboto font-semibold italic
+    ml-2 flex gap-2 items-center"
+  >
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    Google Cloud Platform (GCP)
+  </h3>
+
+  <p>At the time of migration, GCP met all the project's needs and had
+    a quite generous free tier for what was required.
+  </p>
+
+  <p>The Pub/Sub service was used to create topics and subscribe the
+    applications (Index Scraper, Main Scraper, and Messenger) to them.
+  </p>
+
+  <p>Cloud Scheduler was used to schedule the insertion of a message
+    into the topic that triggered the Index Scraper instance.
+  </p>
+
+  <p>Cloud Functions handled instantiating the applications (Index
+    Scraper, Main Scraper, and Messenger) upon receiving a message in
+    the corresponding topic.
+  </p>
+
+  <p>We continued using MongoDB as the main database and to store
+    queue records and results. Using SQL on GCP was too expensive
+    for our use, so the MongoDB Atlas free tier was kept.
+  </p>
+
+  <p>Service management was done mainly through Shell scripts, and the
+    GCP Console platform also helped a lot.
+  </p>
+
+  <a class="mx-auto text-center text-sky-500 underline
+    hover:text-sky-200 flex gap-2 items-center max-w-fit bg-sky-700/30 p-2 rounded-lg"
+    target="_blank"
+    href="https://github.com/gorandp/utn-frsn-news/tree/f4b86d3"
+  >
+    <i data-lucide="github" class="w-4 h-4"></i>
+    Project repository at the time GCP was used
+  </a>
+
+  <h3 class="text-xl font-roboto font-semibold italic
+    ml-2 flex gap-2 items-center"
+  >
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    Cloudflare
+  </h3>
+
+  <p>What we use today on Cloudflare was explained in the previous
+    section.
+  </p>
+
+  <p>In this new infra, two major steps were taken: first, Cloudflare
+    D1 began to be used as the main database instead of MongoDB Atlas.
+    This was because D1 offers an SQL solution integrated with the
+    Cloudflare Workers ecosystem, which simplifies project management
+    and development, and also has a quite generous free tier.
+  </p>
+
+  <p>Second, a full-stack web application was hosted to display news on
+    a simple webpage, using FastAPI in the backend and
+    Jinja2+TailwindCSS for template rendering.
+  </p>
+
+  <p>All of this is mounted on one of the world's largest and most
+    robust networks, with highly available and scalable infrastructure.
+  </p>
+
+  <p>Services are configurable via a JSON file within the project called
+    <code class="bg-sky-100/30 mx-1 px-1">wrangler.jsonc</code>,
+    which facilitates application management and deployment.
+  </p>
+
+  <p>Deployment is very simple, with a single command
+    <code class="bg-sky-100/30 mx-1 px-1">uv run pywrangler deploy</code>
+    or even better with automatic deployment via GitHub Actions (which
+    is configured in this repository).
+  </p>
+
+  <p>As soon as I started the code migration, I found that they promote
+    the use of
+    <a class="text-sky-500 underline hover:text-sky-200
+        bg-sky-700/30 px-1 rounded"
+      href="https://docs.astral.sh/uv/"
+    >
+      uv</a>
+    for managing Python projects in Workers, and honestly, it's a
+    fantastic tool that makes the developer's life much easier.
+  </p>
+
+  <p>Nevertheless, migrating from GCP to Cloudflare was a huge
+    challenge, both to refactor much of the code to be asynchronous
+    and use Pyodide (since Cloudflare Workers does not support Python
+    natively, but uses WebAssembly via Pyodide), as well as to transfer
+    all information from MongoDB Atlas to Cloudflare D1 (SQL).
+  </p>
+
+  <p>This great challenge that took about 3 days of intense effort and
+    learning was documented in GitHub Issue #3 of the repository:
+  </p>
+
+  <a class="mx-auto text-center text-sky-500 underline
+      hover:text-sky-200 flex gap-2 items-center max-w-fit
+      bg-sky-700/30 p-2 rounded-lg"
+    target="_blank"
+    href="https://github.com/gorandp/utn-frsn-news/issues/3"
+  >
+    <i data-lucide="github" class="w-4 h-4"></i>
+    Refactor + Migration from GCP to Cloudflare Workers
+  </a>
+
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">Where can I see the source code?</h2>
+
+  <p>The project's source code is available on GitHub at the following
+    link:
+  </p>
+
+  <a class="mx-auto text-center text-sky-500 underline
+      hover:text-sky-200 flex gap-2 items-center max-w-fit
+      bg-sky-700/30 p-2 rounded-lg"
+    target="_blank"
+    href="https://github.com/gorandp/utn-frsn-news"
+  >
+    <i data-lucide="github" class="w-4 h-4"></i>
+    Project Repository
+  </a>
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">Who developed it?</h2>
+
+  <div class="flex flex-col sm:flex-row w-full gap-10 items-center">
+    <div class="max-w-40 mx-auto mb-4 sm:mb-0">
+      <img src="/static/img/gorandp.jpg" alt="gorandp logo" class="rounded-md shadow-lg" />
+    </div>
+    <div class="flex flex-col gap-4">
+      <p>The project was developed by Goran Prpic, an Argentine
+        developer passionate about technology and continuous learning.
+      </p>
+
+      <p>You can contact me or see more of my projects at the following
+        links:
+      </p>
+
+      <ul class="ml-8 list-disc">
+        <li>GitHub: <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://github.com/gorandp">
+          https://github.com/gorandp
+        </a></li>
+        <li>LinkedIn: <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://linkedin.com/in/gorandp">
+          https://linkedin.com/in/gorandp
+        </a></li>
+        <!-- <li>Website: <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://gorandp.com">
+          https://gorandp.com
+        </a></li> -->
+        <li>Telegram: <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://t.me/gorandp">
+          https://t.me/gorandp
+        </a></li>
+      </ul>
+    </div>
+  </div>
+</section>
