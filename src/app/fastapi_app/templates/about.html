@@ -1,6 +1,537 @@
 {% extends "layout.html" %}
 {% block content %}
 
+<div class="mx-auto max-w-5xl my-8 flex gap-10 flex-col sm:flex-row items-center justify-center align-middle">
+  <div>
+    <img src="/static/icons/logo.jpg" alt="Logo" width="100" />
+  </div>
+  <h1 class="text-3xl font-bold font-roboto" >Proyecto UTN FRSN NEWS</h1>
+</div>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">¿Qué es?</h2>
+  <p>Es un proyecto personal para practicar procesos robustos de web
+    scraping y automatización, uso colas de tareas, bases de datos SQL
+    y aprender sobre Cloudflare Workers y su ecosistema de
+    herramientas.
+  </p>
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">¿Cómo funciona?</h2>
+   <p>El proyecto se compone de varios scripts que se encargan de extraer y publicar las últimas noticias de la facultad en un canal de Telegram.</p>
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">¿Dónde puedo verlo?</h2>
+  <p>En el canal de Telegram: <a href="https://t.me/utnfrsnnews" class="text-blue-500">https://t.me/utnfrsnnews</a></p>
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">¿Qué tecnologías utiliza?</h2>
+  <p>Utiliza Cloudflare Workers para alojar los scripts, Cloudflare D1 como base de datos SQL, Cloudflare Queues para gestionar las tareas y Cloudflare Images para almacenar las imágenes de las noticias.</p>
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">¿Cómo está estructurado el proyecto?</h2>
+  <p>El proyecto se compone de cuatro aplicaciones principales: el Index Scraper, el Main Scraper, el Messenger y la Webpage. Cada una de ellas tiene una función específica en el proceso de extracción y publicación de las noticias.</p>
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">Index Scraper</h2>
+
+  <p>Detecta noticias nuevas y extrae las URLs de las mismas</p>
+
+  <p>Corre a los 0 minutos de cada hora.</p>
+
+  <p>El workflow del mismo consiste en, primero, traer la URL de la
+    última noticia que tengamos disponible en la base de datos, en caso
+    de ser la primer corrida no va a traer ninguna y se almacena None.</p>
+
+  <p>Luego, obtiene las últimas noticias de la facultad, las parsea y
+    se fija si en alguna de las primeras 5 más recientes encuentra la
+    URL de la base de datos.
+  </p>
+
+  <p>De ser así, corta en ese punto y filtra todas las noticias que
+    ya existan en la DB. Si luego de filtrar, quedan noticias, insertar
+    todas las URLs que encontró en esa página (en orden cronológico
+    ascendente) en la cola
+    <code class="bg-sky-100/30 mx-1 px-1">utn-frsn-news-scraper</code>
+    para que el Main Scraper las procese y recupere la información
+    completa de las mismas.
+  </p>
+
+  <p>En caso de que la última noticia de la DB no se encuentre
+    en las primeras 5 noticias, se continúa con las 4 páginas siguientes
+    y se hace el mismo análisis pero esta vez de todo el listado de
+    noticias excepto las 5 más viejas (ya que para asegurarnos que no
+    hubo ningún hueco en la publicación de noticias hecho por el origen,
+    asumimos que el publicar noticias previas a la última es una
+    posibilidad de caso límite, y ponemos como margen que pueden llegar
+    a publicar una noticas 5 lugares atrás de la(s) más reciente(s)).
+  </p>
+
+  <p>Si corta en algún momento, hace el mismo análisis mencionado,
+    filtra todas las URLs de noticias que ya estén en la DB y
+    agrega las nuevas a la cola
+    <code class="bg-sky-100/30 mx-1 px-1">utn-frsn-news-scraper</code>.
+  </p>
+
+  <p>En caso de no cortar, continúa hasta la última página de
+    resultados de noticias, y ahí es cuando hace el corte y procede
+    al filtrado e inserción en la cola.
+  </p>
+
+  <img src="/static/img/indexScraper.transparent.drawio.png"
+    alt="Index Scraper Workflow Diagram"
+    class="max-w-lg mx-auto"
+    />
+
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">Main Scraper</h2>
+
+  <p>Extrae la información completa de cada noticia a partir de su URL</p>
+
+  <p>Corre una única instancia a la vez, y es disparado por la cola
+    <code class="bg-sky-100/30 mx-1 px-1">utn-frsn-news-scraper</code>.
+  </p>
+
+  <p>Cloudflare, si hay tareas en la cola, levanta un solo worker para
+    que procese todas las tareas pendientes. Está en la decisión del
+    desarrollador si procesarlas secuencialmente o paralelamente, lo
+    cual es una gran ventaja ya que este proyecto depende de ser
+    secuencial en el orden en que las noticias se guardan y se publican.
+  </p>
+
+  <p>Al finalizar el scraping, guarda la imagen de la noticia en
+    Cloudflare Images y almacena toda la información de la noticia
+    en la DB SQL (Cloudflare D1).
+  </p>
+
+  <p>Por último, inserta una tarea en la cola de trabajo
+    <code class="bg-sky-100/30 mx-1 px-1">utn-frsn-news-messenger</code>
+    para que el Messenger envíe la noticia por Telegram.
+  </p>
+
+  <img src="/static/img/mainScraper.transparent.drawio.png"
+    alt="Main Scraper Workflow Diagram"
+    class="max-w-lg mx-auto"
+    />
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">Messenger</h2>
+
+  <p>Envía la noticia por Telegram</p>
+
+  <p>Corre una única instancia a la vez, y es disparado por la cola
+    <code class="bg-sky-100/30 mx-1 px-1">utn-frsn-news-messenger</code>.
+  </p>
+
+  <p>Al igual que el workflow anterior, Cloudflare levanta un solo
+    worker para que procese todas las tareas pendientes de la cola de
+    trabajo. Lo cual es muy conveniente para procesar secuencialmente
+    cada tarea pendiente de enviar mensajes y enviar las noticias en el
+    orden cronológico correcto por Telegram.
+  </p>
+
+  <p>El workflow de esta aplicación es muy sencillo, para cada tarea
+    levanta la información de la DB del ID de la noticia a enviar,
+    formatea el mensaje y lo envía por Telegram. Envía primero la imagen
+    de la noticia, luego envía el título y el contenido de la noticia
+    en un mensaje aparte. Esto se realiza de esta manera porque el
+    "caption" de la imagen en Telegram tiene un límite de caracteres
+    relativamente bajo comparado a la cantidad de caracteres que
+    contiene el contenido de cada noticia. Incluso, hay veces que las
+    noticias superan el propio límite de caracteres de un mensaje de
+    texto de Telegram, por lo que se hace un corte cada cierta
+    cantidad de caracteres para enviar el contenido en varios mensajes,
+    y así evitar perder información de la noticia. Podemos decir con
+    seguridad que esto pasa muy cada tanto, y a lo sumo se tiene que
+    enviar el contenido en dos mensajes.
+  </p>
+
+  <img src="/static/img/messenger.transparent.drawio.png"
+    alt="Messenger Workflow Diagram"
+    class="max-w-lg mx-auto"
+    />
+
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">¿Cómo es la estructura de la base de datos?</h2>
+  <p>La base de datos se compone de una sola tabla llamada "news" que almacena toda la información relacionada con cada noticia, incluyendo su URL, título, contenido, fecha de creación, entre otros campos.</p>
+
+  <table class="w-full border-collapse border border-gray-300">
+  <thead class="bg-gray-100 border-b border-gray-300 text-left text-gray-800">
+    <tr>
+      <th class="p-2">Campo</th>
+      <th class="p-2">Tipo</th>
+      <th class="p-2">Descripción</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">id</td>
+      <td class="p-2">INTEGER</td>
+      <td class="p-2">Identificador único de cada noticia</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">url</td>
+      <td class="p-2">VARCHAR(511)</td>
+      <td class="p-2">URL única que identifica esta noticia</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">title</td>
+      <td class="p-2">VARCHAR(511)</td>
+      <td class="p-2">Título de la noticia</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">content</td>
+      <td class="p-2">TEXT</td>
+      <td class="p-2">Contenido de la noticia</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">photo_id</td>
+      <td class="p-2">VARCHAR(36)</td>
+      <td class="p-2">ID de la imagen en Cloudflare Images</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">response_elapsed_seconds</td>
+      <td class="p-2">REAL</td>
+      <td class="p-2">Segundos que tardó el servidor de la facultad en completar la solicitud HTTP</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">parse_elapsed_seconds</td>
+      <td class="p-2">REAL</td>
+      <td class="p-2">Segundos que tardó en parsear el HTML</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">origin_created_at</td>
+      <td class="p-2">TEXT</td>
+      <td class="p-2">Fecha y hora de creación de la noticia por el origen</td>
+    </tr>
+    <tr class="border-b border-gray-300/50">
+      <td class="p-2">indexed_at</td>
+      <td class="p-2">TEXT</td>
+      <td class="p-2">Momento en que el Index Scraper detectó esta noticia</td>
+    </tr>
+    <tr>
+      <td class="p-2">inserted_at</td>
+      <td class="p-2">TEXT</td>
+      <td class="p-2">Momento en que el Main Scraper insertó esta noticia</td>
+    </tr>
+  </tbody>
+  </table>
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">¿Cómo es la estructura de las colas de trabajo?</h2>
+
+  <p>El proyecto utiliza dos colas de trabajo para gestionar las tareas
+    de scraping y envío de mensajes por Telegram.
+  </p>
+
+  <p>La primera cola, llamada
+    <code class="bg-sky-100/30 mx-1 px-1">utn-frsn-news-scraper</code>,
+    se encarga de almacenar las URLs de las noticias que el Index Scraper
+    detecta como nuevas y que el Main Scraper debe procesar para extraer la
+    información completa de cada noticia.
+  </p>
+
+  <table class="w-full border-collapse border border-gray-300">
+    <thead class="bg-gray-100 border-b border-gray-300 text-left text-gray-800">
+      <th class="p-2">Campo</th>
+      <th class="p-2">Tipo</th>
+      <th class="p-2">Descripción</th>
+    </thead>
+    <tbody>
+      <tr class="border-b border-gray-300/50">
+        <td class="p-2">news_url</td>
+        <td class="p-2">string</td>
+        <td class="p-2">URL de la noticia a procesar</td>
+      </tr>
+      <tr class="border-b border-gray-300/50">
+        <td class="p-2">photo_url</td>
+        <td class="p-2">string</td>
+        <td class="p-2">URL de la foto de la noticia a procesar</td>
+      </tr>
+      <tr class="border-b border-gray-300/50">
+        <td class="p-2">inserted_at</td>
+        <td class="p-2">string</td>
+        <td class="p-2">Fecha de inserción de la tarea en la cola (fecha de indexado de la noticia)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>La segunda cola, llamada
+    <code class="bg-sky-100/30 mx-1 px-1">utn-frsn-news-messenger</code>,
+    se encarga de almacenar los IDs de las noticias que el Main Scraper ha
+    procesado y que el Messenger debe enviar por Telegram.</p>
+
+  <table class="w-full border-collapse border border-gray-300">
+    <thead class="bg-gray-100 border-b border-gray-300 text-left text-gray-800">
+      <th class="p-2">Campo</th>
+      <th class="p-2">Tipo</th>
+      <th class="p-2">Descripción</th>
+    </thead>
+    <tbody>
+      <tr class="border-b border-gray-300/50">
+        <td class="p-2">news_id</td>
+        <td class="p-2">integer</td>
+        <td class="p-2">ID interno de la noticia a procesar</td>
+      </tr>
+      <tr class="border-b border-gray-300/50">
+        <td class="p-2">inserted_at</td>
+        <td class="p-2">string</td>
+        <td class="p-2">Fecha de inserción de la tarea en la cola (fecha de insertado de la noticia)</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">¿Qué infraestructura se usa?</h2>
+
+  <p>En la actualidad, todo el proyecto (es decir, las 4 apps) se
+    encuentra alojado en Cloudflare Workers, utilizando Cloudflare D1 como
+    base de datos SQL, Cloudflare Queues para gestionar las tareas y
+    Cloudflare Images para almacenar las imágenes de las noticias.
+  </p>
+
+  <p>Se utiliza el plan de pago Workers Paid y el plan de 100k Images
+    (también pago).
+  </p>
+
+  <p>El listado de servicios y su documentación es la siguiente:</p>
+
+  <ul class="ml-8 list-disc">
+    <li>Cloudflare Workers: <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://workers.cloudflare.com/">https://workers.cloudflare.com/</a></li>
+    <li>Cloudflare D1 (main database): <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://developers.cloudflare.com/d1/">https://developers.cloudflare.com/d1/</a></li>
+    <li>Cloudflare Images: <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://developers.cloudflare.com/images/">https://developers.cloudflare.com/images/</a></li>
+    <li>Cloudflare Queues: <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://developers.cloudflare.com/queues/">https://developers.cloudflare.com/queues/</a></li>
+  </ul>
+</section>
+
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">¿Siempre se usó la misma infraestructura?</h2>
+
+  <p>No, el proyecto tuvo varias migraciones de infraestructura hasta llegar
+    a la actual en Cloudflare Workers. Esto se debió a varios factores, como
+    cambios en los planes gratuitos de los servicios utilizados, la necesidad
+    de una mayor robustez y disponibilidad, y la búsqueda de una mejor
+    integración entre las herramientas utilizadas.</p>
+  
+  <p>Primero se comenzó con Heroku y MongoDB Atlas, luego se migró a GCP
+    (y se mantuvo MongoDB Atlas) y finalmente a Cloudflare Workers.
+  </p>
+
+  <p>De cada una de esas etapas he aprendido mucho y de las migraciones
+    aprendí más todavía.</p>
+  
+
+  <h3 class="text-xl font-roboto font-semibold italic
+    ml-2 flex gap-2 items-center"
+  >
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    Heroku
+  </h3>
+
+  <p>Lo que puedo contar de Heroku es que fue una buena plataforma para
+    comenzar, especialmente por su facilidad de uso y su ecosistema de
+    herramientas (en su momento las que usé eran gratuitas).
+  </p>
+
+  <p>Se utilizaba Scheduler y Task para programar y ejecutar las
+    aplicaciones de scraping y mensajeo/notificación.
+  </p>
+
+  <p><a href="https://help.heroku.com/RSBRUH58/removal-of-heroku-free-product-plans-faq"
+    target="_blank"
+    class="text-sky-500 underline hover:text-sky-200"
+  >
+    A partir del 28/11/2022, Heroku eliminó sus planes gratuitos, lo que
+    llevó a la necesidad de migrar a otra plataforma para mantener
+    la austeridad del proyecto.
+  </a></p>
+
+  <a class="mx-auto text-center text-sky-500 underline
+    hover:text-sky-200 flex gap-2 items-center max-w-fit bg-sky-700/30 p-2 rounded-lg"
+    target="_blank"
+    href="https://github.com/gorandp/utn-frsn-news/tree/5f98c06"
+  >
+    <i data-lucide="github" class="w-4 h-4"></i>
+    Repositorio del proyecto en el momento que se usaba Heroku
+  </a>
+
+  <h3 class="text-xl font-roboto font-semibold italic
+    ml-2 flex gap-2 items-center"
+  >
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    Google Cloud Platform (GCP)
+  </h3>
+
+  <p>Al momento de migrar, GCP resolvía todas las necesidades del proyecto
+    y tenía un free tier bastante generoso para lo que se necesitaba.
+  </p>
+
+  <p>Se utilizó el servicio Pub/Sub para crear tópicos y suscribir a
+    los mismos las aplicaciones (Index Scraper, Main Scraper y
+    Messenger)
+  </p>
+
+  <p>Cloud Schedule se usaba para programar el insertado de un mensaje
+    en el tópico que levantaba la instancia del Index Scraper.
+  </p>
+
+  <p>Cloud Functions se encargaba de instanciar las aplicaciones
+    (Index Scraper, Main Scraper y Messenger) al recibir un mensaje
+    en el tópico correspondiente.
+  </p>
+
+  <p>Seguimos utilizando MongoDB como base de datos principal y para
+    guardar los registros y resultados de las colas de trabajo.
+    Utilizar SQL en GCP era demasiado caro para el uso que
+    le íbamos a dar, por lo que se mantuvo el free tier de MongoDB Atlas.
+  </p>
+
+  <p>La gestión de los servicios se hacían principalmente mediante scripts de
+    Shell, y también ayudaba mucho la plataforma Console de GCP.
+  </p>
+
+  <a class="mx-auto text-center text-sky-500 underline
+    hover:text-sky-200 flex gap-2 items-center max-w-fit bg-sky-700/30 p-2 rounded-lg"
+    target="_blank"
+    href="https://github.com/gorandp/utn-frsn-news/tree/f4b86d3"
+  >
+    <i data-lucide="github" class="w-4 h-4"></i>
+    Repositorio del proyecto en el momento que se usaba GCP
+  </a>
+
+  <h3 class="text-xl font-roboto font-semibold italic
+    ml-2 flex gap-2 items-center"
+  >
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    Cloudflare
+  </h3>
+
+  <p>Lo que usamos hoy en día en Cloudflare fue explicado en el apartado
+    anterior.
+  </p>
+
+  <p>En este nueva infra se hicieron dos grandes pasos, el primero fue
+    que se comenzó a utilizar como base de datos principal Cloudflare D1
+    en lugar de MongoDB Atlas. Esto se debió a que D1 ofrece una solución
+    SQL integrada con el ecosistema de Cloudflare Workers, lo que simplifica
+    la gestión y el desarrollo del proyecto, y además tiene un free tier
+    bastante generoso.
+  </p>
+
+  <p>Lo segundo fue que se hosteó una aplicación full-stack web para
+    mostrar las noticias en una página web sencilla, utilizando FastAPI
+    en el backend y Jinja2+TailwindCSS para el renderizado de
+    plantillas.
+  </p>
+
+  <p>Todo esto está montado en una de las redes más grandes y robustas
+    del mundo, con una infraestructura altamente disponible y escalable.
+  </p>
+
+  <p>Los servicios son configurables mediante un JSON dentro del proyecto
+    llamado <code class="bg-sky-100/30 mx-1 px-1">wrangler.jsonc</code>,
+    lo que facilita la gestión y el despliegue de las aplicaciones.
+  </p>
+
+  <p>El despliegue es muy sencillo, con un solo comando
+    <code class="bg-sky-100/30 mx-1 px-1">uv run pywrangler deploy</code>
+    o mejor aún con el deploy automático mediante GitHub Actions
+    (el cual está configurado en el repositorio).
+  </p>
+
+  <p>Apenas comencé con la migración del código, me encontré que promueven
+    el uso de
+    <a class="text-sky-500 underline hover:text-sky-200 bg-sky-700/30 px-1 rounded"
+      href="https://docs.astral.sh/uv/"
+      >
+      uv
+    </a>
+    para gestionar los proyectos de Python en Workers, y la verdad es que
+    es una herramienta fantástica que facilita mucho la vida del
+    desarrollador.
+  </p>
+
+  <p>Aún así, la migración de GCP a Cloudflare fue un gran desafío,
+    tanto como para refactorizar gran parte del código, para ser
+    asíncrono y utlizar Pyodide (ya que Cloudflare Workers no
+    soporta Python de forma nativa, sino que utiliza WebAssembly
+    mediante Pyodide), como también para transferir toda la información
+    de MongoDB Atlas a Cloudflare D1 (SQL).
+  </p>
+
+  <p>Todo este gran desafío que llevó unos 3 días de mucho esfuerzo y
+    aprendizaje quedó documentado en el Github Issue #3 del repositorio:
+  </p>
+
+  <a class="mx-auto text-center text-sky-500 underline
+    hover:text-sky-200 flex gap-2 items-center max-w-fit bg-sky-700/30 p-2 rounded-lg"
+    target="_blank"
+    href="https://github.com/gorandp/utn-frsn-news/issues/3"
+  >
+    <i data-lucide="github" class="w-4 h-4"></i>
+    Refactor + Migración de GCP a Cloudflare Workers
+  </a>
+
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">¿Dónde puedo ver el código fuente?</h2>
+
+  <p>El código fuente del proyecto está disponible en GitHub en el siguiente enlace:</p>
+
+  <a class="mx-auto text-center text-sky-500 underline
+    hover:text-sky-200 flex gap-2 items-center max-w-fit bg-sky-700/30 p-2 rounded-lg"
+    target="_blank"
+    href="https://github.com/gorandp/utn-frsn-news"
+  >
+    <i data-lucide="github" class="w-4 h-4"></i>
+    Repositorio del proyecto
+  </a>
+</section>
+
+<section class="mx-auto max-w-5xl my-8 flex flex-col gap-4">
+  <h2 class="text-2xl font-bold font-roboto">¿Quién lo desarrolló?</h2>
+
+  <div class="flex flex-col sm:flex-row w-full gap-10 items-center">
+    <div class="max-w-40 mx-auto mb-4 sm:mb-0">
+      <img src="/static/img/gorandp.jpg" alt="gorandp logo" class="rounded-md shadow-lg" />
+    </div>
+    <div class="flex flex-col gap-4">
+      <p>El proyecto fue desarrollado por Goran Prpic, un desarrollador
+        argentino apasionado por la tecnología y el aprendizaje continuo.
+      </p>
+
+      <p>Puedes contactarme o ver más de mis proyectos en los siguientes
+        enlaces:</p>
+
+      <ul class="ml-8 list-disc">
+        <li>GitHub: <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://github.com/gorandp">
+          https://github.com/gorandp
+        </a></li>
+        <li>Linkedin: <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://linkedin.com/in/gorandp">
+          https://linkedin.com/in/gorandp
+        </a></li>
+        <!-- <li>Website: <a class="text-sky-500 underline hover:text-sky-200" target="_blank" href="https://gorandp.com">
+          https://gorandp.com
+        </a></li> -->
+      </ul>
+    </div>
+  </div>
+</section>
 
 
 {% endblock content %}
