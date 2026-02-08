@@ -4,6 +4,8 @@
 
 Webpage: https://utn.gorandp.com
 
+OpenAPI documentation: https://utn.gorandp.com/docs
+
 Telegram Channel: https://t.me/utnfrsnnews
 
 Detailed information about this project: https://utn.gorandp.com/about
