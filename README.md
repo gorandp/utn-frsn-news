@@ -143,3 +143,8 @@ CLOUDFLARE_IMAGES_API_TOKEN="<SECRET>"
 LOGGER_LEVEL="INFO"
 TIMEOUT="180"
 ```
+
+## Future Work
+
+- Unit testing
+- Github workflows (for testing and coverage)

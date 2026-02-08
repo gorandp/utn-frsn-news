@@ -2,13 +2,24 @@
 {% block content %}
 
 <div class="max-w-3xl mx-auto mb-5 py-8 px-4
-  text-3xl font-bold
   flex gap-2 flex-col sm:flex-row
   justify-between items-center"
 >
-  <h1>Últimas noticias</h1>
+  <h1 class="text-3xl font-bold">Últimas noticias</h1>
 
-  <div>
+  <div class="flex gap-5">
+    <a href="https://www.frsn.utn.edu.ar/?paged=1&page_id=80"
+      target="_blank"
+      class="bg-sky-700 hover:bg-sky-900
+        border-2 border-transparent hover:border-sky-200
+        text-white
+        p-2 rounded-lg
+        flex items-center gap-2
+        shadow-md hover:shadow-lg max-w-fit"
+    >
+      <p class="whitespace-nowrap text-sm">Ver feed original</p>
+      <i data-lucide="external-link"></i>
+    </a>
     <a href="{{ url_for('search') }}"
       class="bg-sky-700 hover:bg-sky-900
         border-2 border-transparent hover:border-sky-200
