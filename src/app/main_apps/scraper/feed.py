@@ -100,4 +100,4 @@ class HistoricFeed(LogWrapper):
         for task in tasks:
             urls.extend(await task)
 
-        return urls
+        return reversed(urls)
