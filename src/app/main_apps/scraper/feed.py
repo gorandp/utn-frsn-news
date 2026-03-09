@@ -80,7 +80,7 @@ class HistoricFeed(LogWrapper):
         urls.extend(await self.get_data(soup))
         if latest_url and latest_url in [u[0] for u in urls[:-5]]:
             # If we found the latest_url in the first page, return early
-            return urls
+            return reversed(urls)
         page = 2
         tasks = []
         while page <= last_page:
@@ -95,7 +95,7 @@ class HistoricFeed(LogWrapper):
                 tasks = []
                 if latest_url and latest_url in [u[0] for u in urls[:-5]]:
                     # If we found the latest_url, stop processing further pages
-                    return urls
+                    return reversed(urls)
         # Process any remaining tasks
         for task in tasks:
             urls.extend(await task)
