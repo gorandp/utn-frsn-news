@@ -150,3 +150,4 @@ TIMEOUT="180"
 
 - Unit testing
 - Github workflows (for testing and coverage)
+- Clean architecture
